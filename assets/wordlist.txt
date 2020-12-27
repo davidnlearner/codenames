@@ -1,0 +1,37 @@
+apple
+orange
+bear
+turtle
+tree
+oak
+foo
+bar
+baz
+dog
+cat
+cow
+frog
+pig
+hamster
+mercury
+venus
+mars
+hestia
+hades
+poseidon
+ares
+jupiter
+saturn
+pluto
+zeus
+hera
+apollo
+hermes
+vulcan
+athena
+chicago
+new york
+Detroit
+boston
+san francisco
+miami

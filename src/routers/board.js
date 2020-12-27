@@ -39,4 +39,13 @@ router.get('/boards/:id/overlay', async (req, res) => {
     }
 })
 
+router.get('/boards/:id', async (req, res) => {
+    const board = await Board.findOne({ _id: req.params.id })
+    try {
+        res.send(board)
+    } catch (e) {
+        res.status(500).send(e)
+    }
+})
+
 module.exports = router

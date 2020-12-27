@@ -1,9 +1,31 @@
+@font-face {
+    font-family: 'SkyFall';
+    src: url('../fonts/SkyFallDone.woff') format('woff'), /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+         url('../fonts/SkyFallDone.woff2') format('woff2'),
+         url('../fonts/SkyFallDone.ttf') format('truetype'); /* Chrome 4+, Firefox 3.5, Opera 10+, Safari 3—5 */
+  }  
+
+:root {
+    --card-text: rgb(243, 230, 219);
+} 
+
+body{
+    background-color: rgb(182, 214, 228);
+}
+
 .card {
     background-color: tan;
+    color: var(--card-text);
     max-width: 5rem;
-    /*height: 2rem; */
-    border: 1px solid black;
+    border: .3rem solid  var(--card-text);
     padding: 1.5rem;
     text-align: center;
     border-radius: .5rem;
+    font-family: 'SkyFall';
+    font-size: .8rem;
+    margin: 3px;
+}
+
+.red-card{
+    background-color: rgba(255, 0, 0, .7);
 }

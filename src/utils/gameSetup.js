@@ -25,6 +25,9 @@ const newWords = () => {
 
 const newOverlay = () => {
   const overlay = []
+  while(overlay.length < 25){
+    overlay.push('red')
+  }
   return overlay
 }
 

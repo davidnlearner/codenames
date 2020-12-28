@@ -36,6 +36,16 @@ router.get('/boards/:id/overlay', async (req, res) => {
     }
 })
 
+
+router.get('/boards/game/:gameId', async (req, res) => {
+    const board = await Board.findOne({gameId: req.params.gameId})
+    try {
+        res.send(board)
+    } catch (e) {
+        res.status(500).send(e)
+    }
+})
+
 router.get('/boards/:id', async (req, res) => {
     const board = await Board.findOne({ _id: req.params.id })
     try {
@@ -45,16 +55,14 @@ router.get('/boards/:id', async (req, res) => {
     }
 })
 
-// router.get('/boards', async (req, res) => {
-//     const boards = await Board.array.forEach(element => {
-        
-//     });()
-//     try {
-//         res.send(boards)
-//     } catch (e) {
-//         res.status(500).send(e)
-//     }
-// })
+router.get('/boards', async (req, res) => {
+    const boards = await Board.find()
+    try {
+        res.send(boards)
+    } catch (e) {
+        res.status(500).send(e)
+    }
+})
 
 router.delete('/boards/:id', async (req, res) => {
     try {

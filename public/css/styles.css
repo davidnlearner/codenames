@@ -38,6 +38,12 @@ body{
     border-color:var(--team-card-text);
 }
 
+.assassin-card {
+    background-color: rgba(62, 62, 63, 0.877);
+    color: var(--team-card-text);
+    border-color:var(--team-card-text);
+}
+
 #board-container {
     display: grid;
     grid-template-columns: repeat(5, 1fr);

@@ -3,18 +3,27 @@
 
     <head>
         <meta charset="utf-8">
-        <title>Test Website</title>
-        <link rel="stylesheet" href="css/styles.css">
+        <title>Codenames</title>
+        <link rel="icon" href="/img/favicon.png">
+        <link rel="stylesheet" href="/css/styles.css">
     </head>
 
     <body>
-        <div class="wrapper">
-            <div id="chatbox">
-            </div>
-            <div id="board-container">
+        <div class="centered-form">
+            <div class="centered-form__box">
+                <h1>Codenames</h1>
+                <form action="/codenames.html">
+                    <label>Display name:</label>
+                    <input type="text" name="username" placeholder="Display name" required>
+                    <br><br>
+                    <label>Game Name</label>
+                    <input type="text" name="lobbyName" placeholder="Game name" required>
+                    <br><br>
+                    <button id="join-btn">Join a Game</button>
+                    <button id="create-btn">Create New Game</button>
+                </form>
             </div>
         </div>
-
-        <script src="js/app.js"></script>
     </body>
+
 </html>

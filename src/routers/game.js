@@ -2,7 +2,7 @@ const express = require('express')
 const Game = require('../models/game')
 const router = new express.Router()
 const Board = require('../models/board')
-const boardRouter = require('../routers/board')
+const { newWords, newOverlay, startTeam } = require('../utils/gameSetup')
 
 
 router.post('/games/:lobby', async (req, res) => {
@@ -14,31 +14,57 @@ router.post('/games/:lobby', async (req, res) => {
     // if (test === undefined) {
     //     return res.send('Sorry, lobby name is already in use.')
     // }
-    const board = await fetch('/boards', {method: 'POST'})
-    console.log(board)
     const game = new Game({
-        boardId: board.id,
-        players: [],  // To Do: add nickname of player calling post
+        players: [],  // To Do: add username of player calling post  maybe change into two arrays for red and blue teams
         lobbyName
     })
+    const board = new Board({
+        gameId: game._id,
+        wordlist: newWords(),
+        startingTeam: startTeam(),
+        overlay: newOverlay()
+    })
+
     try {
         await game.save()
-        res.status(201).send(game)
+        await board.save()
+        res.status(201).send({game, board})
     } catch (e) {
         res.status(400).send(e)
     }
 
 })
 
-router.get('/games/:id', async (req, res) => {
-    const game = await Game.findOne(req.params.id)
+router.get('/games', async (req, res) => {
+    const game = await Game.find()
     try {
         res.send(game)
     } catch (e) {
         res.status(500).send(e)
     }
-
 })
+
+router.get('/games/:id', async (req, res) => {
+    const game = await Game.findOne({_id: req.params.id})
+    try {
+        res.send(game)
+    } catch (e) {
+        res.status(500).send(e)
+    }
+})
+
+router.get('/games/lobby/:lobbyName', async (req, res) => {
+    const game = await Game.findOne({lobbyName: req.params.lobbyName})
+    try {
+        if(!game) {
+            return res.send({msg: 'no game found'})
+        }
+        res.send(game)
+    } catch (e) {
+        res.status(500).send(e)
+    }
+})
+
 
 // Add player  likely needs improvement
 router.patch('/games/:id/name', async (req, res) => {
@@ -59,14 +85,15 @@ router.patch('/games/:id/name', async (req, res) => {
 
 router.delete('/games/:id', async (req, res) => {
     try {
-        const game = await Game.findOneAndDelete(req.params.id)
+        const game = await Game.findOneAndDelete({_id: req.params.id})
         if (!game) {
             res.status(404).send()
         }
+        const board = await Board.deleteMany({gameId: game._id})
         res.send(game)
     } catch (e) {
-        res.status(500).send()
-    }
+       res.status(500).send()
+   }
 })
 
 

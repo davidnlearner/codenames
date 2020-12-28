@@ -1,10 +1,6 @@
 const mongoose = require('mongoose')
 
 const gameSchema = new mongoose.Schema({
-    boardId: {
-        type: String,
-        required: true
-    },
     players: {
         type: Array,
         required: true
@@ -12,9 +8,18 @@ const gameSchema = new mongoose.Schema({
     lobbyName: {
         type: String,
         required: true,
+    },
+    score: {
+        type: Array,
+        required: true,
+        default: [0,0]
+    },
+    currentRound: {
+        type: Number,
+        required: true,
+        default: 0
     }
 })
-// add game room name?
 
 const Game = mongoose.model('Game', gameSchema)
 

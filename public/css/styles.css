@@ -6,7 +6,8 @@
   }  
 
 :root {
-    --card-text: rgb(243, 230, 219);
+    --card-text: rgba(243, 230, 219, 1);
+    --team-card-text: rgba(24, 21, 21, .6);
 } 
 
 body{
@@ -16,16 +17,31 @@ body{
 .card {
     background-color: tan;
     color: var(--card-text);
-    max-width: 5rem;
+    max-width: 7rem;
     border: .3rem solid  var(--card-text);
-    padding: 1.5rem;
+    padding: 2rem;
     text-align: center;
     border-radius: .5rem;
     font-family: 'SkyFall';
     font-size: .8rem;
-    margin: 3px;
 }
 
 .red-card{
-    background-color: rgba(255, 0, 0, .7);
+    background-color: rgba(214, 13, 13, 0.89);
+    color: var(--team-card-text);
+    border-color:var(--team-card-text);
+}
+
+.blue-card {
+    background-color: rgba(14, 28, 231, 0.877);
+    color: var(--team-card-text);
+    border-color:var(--team-card-text);
+}
+
+#board-container {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-gap: .5rem;
+    margin: .5rem;
+    grid-auto-rows: auto;
 }

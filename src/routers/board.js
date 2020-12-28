@@ -1,13 +1,14 @@
 const express = require('express')
 const Board = require('../models/board')
 const router = new express.Router()
-const { newWords, newOverlay } = require('../utils/gameSetup')
+const { newWords, newOverlay, startTeam } = require('../utils/gameSetup')
 
 
 router.post('/boards', async (req, res) => {
     const board = new Board({
         wordlist: newWords(),
-        overlay: newOverlay()
+        startingTeam: startTeam(),
+        overlay: newOverlay(this.startingTeam)
     })
     try{
         await board.save()
@@ -16,10 +17,6 @@ router.post('/boards', async (req, res) => {
         res.status(400).send(e)
     }
 })
-
-// router.get('/boards', (req, res) => {
-//     res.send('i work')
-// })
 
 router.get('/boards/:id/wordlist', async (req, res) => {
     const board = await Board.findOne({ _id: req.params.id })
@@ -45,6 +42,29 @@ router.get('/boards/:id', async (req, res) => {
         res.send(board)
     } catch (e) {
         res.status(500).send(e)
+    }
+})
+
+// router.get('/boards', async (req, res) => {
+//     const boards = await Board.array.forEach(element => {
+        
+//     });()
+//     try {
+//         res.send(boards)
+//     } catch (e) {
+//         res.status(500).send(e)
+//     }
+// })
+
+router.delete('/boards/:id', async (req, res) => {
+    try {
+        const board = await Board.findOneAndDelete(req.params.id)
+        if (!board) {
+            res.status(404).send()
+        }
+        res.send(board)
+    } catch (e) {
+        res.status(500).send()
     }
 })
 

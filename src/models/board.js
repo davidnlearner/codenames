@@ -5,6 +5,10 @@ const boardSchema = new mongoose.Schema({
         type: Array,
         required: true
     },
+    startingTeam: {
+        type: String,
+        required: true
+    },
     overlay: {
         type: Array,
         required: true,

@@ -1,8 +1,8 @@
 const fs = require('fs')
 const testListPath = './assets/wordlist.txt'
-const fullListPath = './assets/offical_wordlist.txt'
+const wordListPath = './assets/official_wordlist.txt'
 
-const wordlistBuffer = fs.readFileSync(testListPath, (err, data) => {
+const wordlistBuffer = fs.readFileSync(wordListPath, (err, data) => {
     if (err) callback('We have a problem', err);
 
     return data;
@@ -23,15 +23,43 @@ const newWords = () => {
   return gameWords
 }
 
-const newOverlay = () => {
+const startTeam = () => {
+  const team = Math.round(Math.random())
+  if(team === 1) {
+    return 'red'
+  } else {
+    return 'blue'
+  }
+}
+
+const newOverlay = (startTeam) => {
   const overlay = []
+  const teams = ['red', 'red', 'red', 'red', 'red', 'blue', 'blue', 'blue', 'blue', 'blue', 'assassin']
+  const civilians = 25 - (teams.length + 1)
+  for (i = 0; i < civilians; i++){
+    teams.push('civilain')
+  }
+
+  if (startTeam === 'red'){
+    teams.push('red')
+  } else {
+    teams.push('blue')
+  }
+
   while(overlay.length < 25){
-    overlay.push('red')
+    let randomNumber = Math.floor(Math.random() * teams.length)
+    overlay.push(teams[randomNumber])
+    let team = teams.pop()
+    if (teams.length > randomNumber){
+      teams[randomNumber] = team
+    }
+
   }
   return overlay
 }
 
 module.exports = {
   newWords,
-  newOverlay
+  newOverlay,
+  startTeam
 }

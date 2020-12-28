@@ -8,7 +8,7 @@ const generateBoard = (boardId) => {
         data.wordlist.forEach((word, i) => {
             const node = document.createElement('div')
             node.className = "card"
-           //node.classList.add(`${data.overlay[i]}-card`)   //if spymaster
+            node.classList.add(`${data.overlay[i]}-card`)   //if spymaster
             node.innerText = word
             $boardContainer.appendChild(node)
         })
@@ -18,4 +18,4 @@ const generateBoard = (boardId) => {
 
 const clearBoard = () => { $boardContainer.innerHTML = '' }
 
-generateBoard("5fe8cb024161112e68b1aebf")
+generateBoard("5fe921d88948ac2bd8034c6b")

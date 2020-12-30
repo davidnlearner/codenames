@@ -18,12 +18,6 @@ const addPlayer = ({ id, username, lobbyName }) => {
         return player.lobbyName === lobbyName && player.username === username
     })
 
-    //  
-    //
-    //  Might check for lobbyName here instead
-    //
-    //
-
     if(existingPlayer) {
         return {
             error: 'Username is in use!'

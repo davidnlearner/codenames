@@ -1,20 +1,25 @@
 const mongoose = require('mongoose')
 
 const playerSchema = new mongoose.Schema({
-    name: {
+    username: {
         type: String,
         required: true
     },
-    role: {
+    gameId: {
         type: String,
-        required: true
+        required: true,
     },
     team: {
         type: String,
         required: true,
+        default: ''
+    },
+    role: {
+        type: String,
+        required: true,
+        default: ''
     }
 })
-// add game room name?
 
 const Player = mongoose.model('Player', playerSchema)
 

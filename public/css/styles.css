@@ -51,3 +51,11 @@ body{
     margin: .5rem;
     grid-auto-rows: auto;
 }
+
+.wrapper{
+    display: grid;
+    grid-template-columns: 20% 80%;
+    grid-gap: .5rem;
+    margin: .5rem;
+    grid-auto-rows: auto;
+}

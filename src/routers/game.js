@@ -1,7 +1,8 @@
 const express = require('express')
-const Game = require('../models/game')
 const router = new express.Router()
+const Game = require('../models/game')
 const Board = require('../models/board')
+const Player = require('../models/player')
 const { newWords, newOverlay, startTeam } = require('../utils/gameSetup')
 
 
@@ -60,6 +61,20 @@ router.get('/games/lobby/:lobbyName', async (req, res) => {
             return res.send({msg: 'no game found'})
         }
         res.send(game)
+    } catch (e) {
+        res.status(500).send(e)
+    }
+})
+
+//Gets all players in game
+router.get('/games/:id/players', async (req, res) => {
+    const game = await Game.findOne({lobbyName: req.params.lobbyName})
+    try {
+        if(!game) {
+            return res.send({msg: 'no game found'})
+        }
+        const players = await Player.find({gameId: game._id})
+        res.send(players)
     } catch (e) {
         res.status(500).send(e)
     }

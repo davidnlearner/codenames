@@ -16,7 +16,32 @@ app.use(express.static(publicDirectoryPath))
 
 
 io.on('connection', (socket) => {
-    socket.emit('message', {'username': 'Admin', 'text': 'New Player has joined'})
+    socket.on('join', (player, callback) => {
+
+        // Duplicate error stuff originally was here
+        // Need to add it somewhere
+
+        socket.join(player.gameId)
+
+        socket.emit('message', generateMessage('Admin', `Welcome ${player.username}!`))
+        socket.broadcast.to(player.gameId).emit('message', generateMessage('Admin', `${player.username} has joined!`))
+
+        callback()
+    })
+
+    socket.on('sendMessage', (message, callback) => {
+        const filter = new Filter()
+
+        //bad words filter   good model for filtering clue words
+        if(filter.isProfane(message)) {
+            return callback('Profanity is not allowed!')
+        }
+
+        const user = getUser(socket.id)
+
+        io.to(player.gameId).emit('message', generateMessage(user.username, message))
+        callback()
+    })
     
 })
 

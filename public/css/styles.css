@@ -24,6 +24,7 @@ body{
     border-radius: .5rem;
     font-family: 'SkyFall';
     font-size: .8rem;
+    box-sizing: initial;
 }
 
 .red-card{

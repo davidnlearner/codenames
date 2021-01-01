@@ -30,7 +30,7 @@ const generateBoard = async (boardId) => {
 const clearBoard = () => { $boardContainer.innerHTML = '' }
 
 const newBoard = async (gameId) => {
-    const response = await fetch(`/boards/${gameId}`, {method: 'POST'})
+    const response = await fetch(`/boards`, {method: 'POST', body: JSON.stringify({'gameId': `${gameId}`})})
     const data = await response.json()
     generateBoard(data._id)
 }
@@ -38,39 +38,41 @@ const newBoard = async (gameId) => {
 const newGame = async (lobbyName) => {
     const response = await fetch(`/games/${lobbyName}`, {method: 'POST'})
     const data = await response.json()
-    generateBoard(data.board._id)
+    return data
 }
 
-const isNewGame = async (username, lobbyName) => {
+const getGameData = async (lobbyName) => {
     const response = await fetch(`/games/lobby/${lobbyName}`)
     const data = await response.json()
-    console.log(data)
     if (data.msg === 'no game found'){
-        // makes new game with player
         return newGame(lobbyName)
     }
+    return data
+}
+
+const joinGame = async (username, lobbyName) => {
+    const game = await getGameData(lobbyName)
+
     // finds and loads game board
-    const boardRes = await fetch(`/boards/game/${data._id}`)
-    const board = await boardRes.json()
+    const boardRaw = await fetch(`/boards/game/${game._id}`)
+    const board = await boardRaw.json()
     generateBoard(board._id)
 
     // makes new player in game
-    const player = await fetch(`/players`, {method: 'POST', body: JSON.stringify({'username': `${username}`})})
+    const playerData = {'username': `${username}`, 'gameId': `${game._id}`}
+
+    const playerRaw = await fetch('/players', { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify(playerData) })
+    const player = await playerRaw.json()
+
+    // Send join messages
+    socket.emit('join', player, (error) => {
+        if (error) {
+            alert(error)
+            location.href = '/'
+        }
+    })
 
 }
-
-socket.on('newPlayer', (player) => {
-    console.log('new player created')
-})
-
-/*
-socket.emit('join', {username, lobbyName}, (error) => {
-    if (error) {
-        alert(error)
-        location.href = '/'
-    }
-})
-*/
 
 const autoscroll = () => {
     // New message element
@@ -105,23 +107,4 @@ socket.on('message', (message) => {
     autoscroll()
 })
 
-
-
-
-// SAM HELP:     should join function exist here or in index.js   and what to name isNewGame   whether/how to break up isNewGame?
-// I don't think current organization allows for rejection of duplicate usernames   or pass protecting games       
-// Also isNewGame combines join and create button functions
-
-
-// socket.on('join', (username, lobbyName) => {
-//     isNewGame(username, lobbyName)
-// })
-
-// socket.emit('join', {username, room}, (error) => {
-//     if (error) {
-//         alert(error)
-//         location.href = '/'
-//     }
-// })
-
-isNewGame(lobbyName)
+joinGame(username, lobbyName)

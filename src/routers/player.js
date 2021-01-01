@@ -5,17 +5,17 @@ const Player = require('../models/player')
 
 
 router.post('/players', async (req, res) => {
+    console.log(req.body)
     const username = req.body.username
     const gameId = req.body.gameId
     
     const player = new Player({
         username: username,
-        gameId: gameId
+        gameId: gameId        
     })
 
     try {
         await player.save()
-        await socket.emit('newPlayer', player)
         res.status(201).send(player)
     } catch (e) {
         res.status(400).send(e)
@@ -23,8 +23,8 @@ router.post('/players', async (req, res) => {
 
 })
 
-router.get('/players/:id', async (req, res) => {
-    const player = await Player.findOne({_id: req.params.id})
+router.get('/players', async (req, res) => {
+    const player = await Player.findOne({_id: req.body._id})
     try {
         res.send(player)
     } catch (e) {
@@ -42,17 +42,18 @@ router.patch('/players/:id', async (req, res) => {
     }
 
     try{
-        updates.forEach((update) => req.player[update] = req.body[update])
-        await req.player.save()
-        res.send(req.player)
+        const player = await Player.findOne({_id: req.params.id})
+        updates.forEach((update) => player[update] = req.body[update])
+        await player.save()
+        res.send(player)
     }catch (e) {
         res.status(400).send(e)
     }
 })
 
-router.delete('/player/:id', async (req, res) => {
+router.delete('/players', async (req, res) => {
     try {
-        const player = await Player.findOneAndDelete({_id: req.params.id})
+        const player = await Player.findOneAndDelete({_id: req.body._id})
         if (!player) {
             res.status(404).send()
         }

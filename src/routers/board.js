@@ -8,7 +8,8 @@ router.post('/boards', async (req, res) => {
     const board = new Board({
         wordlist: newWords(),
         startingTeam: startTeam(),
-        overlay: newOverlay(this.startingTeam)
+        overlay: newOverlay(this.startingTeam),
+        gameId: req.body.gameId
     })
     try{
         await board.save()

@@ -11,12 +11,10 @@ const playerSchema = new mongoose.Schema({
     },
     team: {
         type: String,
-        required: true,
         default: ''
     },
     role: {
         type: String,
-        required: true,
         default: ''
     }
 })

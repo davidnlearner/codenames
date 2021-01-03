@@ -24,8 +24,28 @@
                     </form>
                 </div>
             </div>
+
             <div id="board-container">
             </div>
+
+            <div>
+
+            </div>
+            <div id="team-info">
+                <div id="red-team" class="team-info-box">
+                    <h3>Red Team: 0</h3>
+                    <span>Clue giver: </span><div id="cluegiver-red-wrapper"><button team='red' role='cluegiver' class="cluegiver-btn red-team team-join-btn">Join</button></div>
+                    <span>Guesser: </span><div id="guesser-red-wrapper"><button team='red' role='guesser' class="guesser-btn red-team team-join-btn">Join</button></div>
+                </div>
+                <div id="blue-team" class="team-info-box">
+                    <h3>Blue Team: 0</h3>
+                    <span>Clue giver: </span><div id="cluegiver-blue-wrapper"><button team='blue' role='cluegiver' class="cluegiver-btn blue-team team-join-btn">Join</button></div>
+                    <span>Guesser: </span><div id="guesser-blue-wrapper"><button team='blue' role='guesser' class="guesser-btn blue-team team-join-btn">Join</button></div>
+                </div>
+
+                
+            </div>
+            
         </div>
 
 
@@ -59,4 +79,5 @@
         <script src="/socket.io/socket.io.js"></script>
         <script src="js/codenames.js"></script>
     </body>
+
 </html>

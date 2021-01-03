@@ -5,7 +5,6 @@ const Player = require('../models/player')
 
 
 router.post('/players', async (req, res) => {
-    console.log(req.body)
     const username = req.body.username
     const gameId = req.body.gameId
     

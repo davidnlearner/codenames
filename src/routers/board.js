@@ -19,25 +19,6 @@ router.post('/boards', async (req, res) => {
     }
 })
 
-router.get('/boards/:id/wordlist', async (req, res) => {
-    const board = await Board.findOne({ _id: req.params.id })
-    try {
-        res.send(board.wordlist)  //revise later for specific game's board
-    } catch (e) {
-        res.status(500).send(e)
-    }
-})
-
-router.get('/boards/:id/overlay', async (req, res) => {
-    const board = await Board.findOne({ _id: req.params.id })
-    try {
-        res.send(board.overlay)  //revise later for specific game's board
-    } catch (e) {
-        res.status(500).send(e)
-    }
-})
-
-
 router.get('/boards/game/:gameId', async (req, res) => {
     const board = await Board.findOne({gameId: req.params.gameId})
     try {
@@ -47,9 +28,13 @@ router.get('/boards/game/:gameId', async (req, res) => {
     }
 })
 
-router.get('/boards/:id', async (req, res) => {
+router.get('/boards/:id/:role', async (req, res) => {
+    const role = req.params.role
     const board = await Board.findOne({ _id: req.params.id })
     try {
+        if ( role === 'guesser' ) {
+            return res.send({wordlist: board.wordlist})
+        }
         res.send(board)
     } catch (e) {
         res.status(500).send(e)

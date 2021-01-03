@@ -15,7 +15,7 @@ const playerSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        default: ''
+        default: 'guesser'
     }
 })
 

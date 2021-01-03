@@ -8,6 +8,8 @@
 :root {
     --card-text: rgba(243, 230, 219, 1);
     --team-card-text: rgba(24, 21, 21, .6);
+    --red-team-color:rgba(214, 13, 13, 0.7);
+    --blue-team-color:  rgba(14, 28, 231, 0.7);
 } 
 
 body{
@@ -24,17 +26,16 @@ body{
     border-radius: .5rem;
     font-family: 'SkyFall';
     font-size: .8rem;
-    box-sizing: initial;
 }
 
 .red-card{
-    background-color: rgba(214, 13, 13, 0.89);
+    background-color: var(--red-team-color);
     color: var(--team-card-text);
     border-color:var(--team-card-text);
 }
 
 .blue-card {
-    background-color: rgba(14, 28, 231, 0.877);
+    background-color:var(--blue-team-color);
     color: var(--team-card-text);
     border-color:var(--team-card-text);
 }
@@ -59,4 +60,52 @@ body{
     grid-gap: .5rem;
     margin: .5rem;
     grid-auto-rows: auto;
+}
+
+#team-info{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    justify-items: center;
+}
+
+#red-team {
+    background-color:  var(--red-team-color);
+}
+
+#blue-team {
+    background-color: var(--blue-team-color);
+}
+
+.team-info-box {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    row-gap: .5rem;
+    color: var(--team-card-text);
+    border-color:var(--team-card-text);
+    border-radius: 10px;
+    padding: 1rem;
+    width: 80%;
+}
+
+.team-info-box h3 {
+    font-family: 'SkyFall';
+    font-size: 1rem;
+    grid-column: 1 / 3;
+    align-self: center;
+    justify-self: center;
+    padding: .2rem;
+}
+
+
+.team-info-box span {
+    align-self: center;
+    font-family: 'SkyFall';
+    font-size: .7rem;
+}
+
+.team-join-btn{
+    border: 1px solid black;
+    justify-self: center;
+    margin: auto;
+    padding: .75rem 4rem;
 }

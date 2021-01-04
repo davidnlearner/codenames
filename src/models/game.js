@@ -14,6 +14,11 @@ const gameSchema = new mongoose.Schema({
         type: Number,
         required: true,
         default: 0
+    },
+    playerRoles: {
+        type: Array,
+        required: true,
+        default: []
     }
 })
 

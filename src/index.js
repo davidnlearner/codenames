@@ -7,7 +7,6 @@ const {generateMessage, generateLocationMessage} = require('./utils/messages')
 const Player = require('./models/player')
 const Board = require('./models/board')
 const Game = require('./models/game')
-let playerRoles = []
 
 const port = process.env.PORT || 3000
 
@@ -23,6 +22,7 @@ io.on('connection', (socket) => {
 
     socket.on('join', async ({playerName, gameId}, callback) => {
         const dupPlayer = await Player.findOne({username: playerName})
+        const game = await Game.findOne({_id: gameId})
 
         if (dupPlayer){
             return callback({error:'Username is already taken. Try again.'})
@@ -37,7 +37,10 @@ io.on('connection', (socket) => {
         player.save()
 
         socket.join(player.gameId)
-        playerRoles.forEach((role) => {
+
+
+
+        game.playerRoles.forEach((role) => {
             socket.emit('new-player-role', role)
         })
 
@@ -56,8 +59,10 @@ io.on('connection', (socket) => {
 
     socket.on('new-role', async ({role, team, playerId}) => {
         const player = await Player.findOne({_id: playerId})
+        const game = await Game.findOne({_id: player.gameId})
 
-        playerRoles.push({role, team, username: player.username})
+        game.playerRoles.push({role, team, username: player.username})
+        game.save()
 
         io.to(player.gameId).emit('new-player-role', {role, team, username: player.username})
         io.to(player.gameId).emit('message', generateMessage('Admin', `${player.username} has become a ${role} for the ${team} team!`))       
@@ -89,15 +94,20 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', async () => {
         const player = await Player.deleteOne({socketId: socket.id})
-
+        
         if (player) {
             io.to(player.gameId).emit('message', generateMessage('Admin', `${player.username} has left.`))
             const remainingPlayers = await Player.find({gameId: player.gameId})
             if (remainingPlayers.length === 0){
-                const game = await Game.deleteOne({gameId: player.gameId})
-                await Board.deleteMany({gameId: player.gameId})
+                await Game.deleteOne({gameId: player.gameId})
+                await Board.deleteOne({gameId: player.gameId})
+            } else {
+                const game = await Game.findOne({_id: player.gameId})
+                game.playerRoles = game.playerRoles.filter((eachPlayer) => {eachPlayer.username != player.username})
+                game.save()
             }
         }
+        
     })
 
 })

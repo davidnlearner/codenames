@@ -6,11 +6,12 @@ const { newWords, newOverlay, getStartTeam } = require('../utils/gameSetup')
 
 router.post('/boards', async (req, res) => {
     const board = new Board({
+        gameId: req.body.gameId,
         wordlist: newWords(),
         startTeam: getStartTeam(),
         overlay: newOverlay(this.startTeam),
-        gameId: req.body.gameId
     })
+
     try{
         await board.save()
         res.status(201).send(board)
@@ -23,6 +24,16 @@ router.get('/boards/game/:gameId', async (req, res) => {
     const board = await Board.findOne({gameId: req.params.gameId})
     try {
         res.send(board)
+    } catch (e) {
+        res.status(500).send(e)
+    }
+})
+
+
+router.get('/boards/initial/:id', async (req, res) => {
+    const board = await Board.findOne({ _id: req.params.id })
+    try {
+        res.send({wordlist: board.wordlist, startTeam: board.startTeam})
     } catch (e) {
         res.status(500).send(e)
     }

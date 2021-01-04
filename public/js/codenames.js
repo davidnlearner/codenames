@@ -20,9 +20,9 @@ const messageTemplate = document.querySelector('#message-template').innerHTML
 // Options
 const { username, lobbyName } = Qs.parse(location.search, { ignoreQueryPrefix: true })
 
-const generateBoard = async (boardId, role) => {
+const generateBoard = async (boardId) => {
     clearBoard()
-    const response = await fetch(`/boards/${boardId}/${role}`)
+    const response = await fetch(`/boards/initial/${boardId}`)
     const data = await response.json()
 
     sessionStorage.setItem('startTeam', data.startTeam)
@@ -56,46 +56,46 @@ const newBoard = async (gameId) => {
 }
 
 const newGame = async (lobbyName) => {
-    const response = await fetch(`/games/${lobbyName}`, { method: 'POST' })
-    const data = await response.json()
-    return data
+    const gameRaw = await fetch(`/games`, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({lobbyName})})
+    const game = await gameRaw.json()
+
+    const boardRaw = await fetch(`/boards`, {method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ gameId: game._id }) })
+    const board = await boardRaw.json()
+
+    return {game, board}
 }
 
 const getGameData = async (lobbyName) => {
-    const response = await fetch(`/games/lobby/${lobbyName}`)
-    const data = await response.json()
-    if (data.msg === 'no game found') {
+    const gameRaw = await fetch(`/games/lobby/${lobbyName}`)
+    const game = await gameRaw.json()
+    if (game.msg === 'no game found') {
         return newGame(lobbyName)
     }
-    return data
-}
 
-const joinGame = async (username, lobbyName) => {
-    const game = await getGameData(lobbyName)
-    sessionStorage.setItem('gameId', game._id)
-
-    // makes new player in game
-    const playerData = { 'username': `${username}`, 'gameId': `${game._id}` }
-
-    const playerRaw = await fetch('/players', { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify(playerData) })
-    const player = await playerRaw.json()
-    sessionStorage.setItem('username', player.username)
-    sessionStorage.setItem('playerId', player._id)
-
-    // finds and loads game board
     const boardRaw = await fetch(`/boards/game/${game._id}`)
     const board = await boardRaw.json()
 
-    sessionStorage.setItem('boardId', board._id)
-    generateBoard(board._id, player.role)
+    return { game, board }
+}
 
-    // Send join messages
-    socket.emit('join', player, (error) => {
+const joinGame = async (username, lobbyName) => {
+    const {game, board} = await getGameData(lobbyName)
+    const gameId = game._id
+    sessionStorage.setItem('gameId', gameId)
+
+    socket.emit('join', {playerName: username, gameId}, ({error, player}) => {
         if (error) {
             alert(error)
             location.href = '/'
+            return
+        } else {
+            sessionStorage.setItem('username', player.username)
+            sessionStorage.setItem('playerId', player._id)
         }
     })
+
+    sessionStorage.setItem('boardId', board._id)
+    generateBoard(board._id)
 
 }
 

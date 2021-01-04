@@ -1,10 +1,6 @@
 const mongoose = require('mongoose')
 
 const gameSchema = new mongoose.Schema({
-    players: {
-        type: Array,
-        required: true
-    },
     lobbyName: {
         type: String,
         required: true,

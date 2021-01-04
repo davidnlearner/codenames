@@ -6,6 +6,7 @@ const socketio = require('socket.io')
 const {generateMessage, generateLocationMessage} = require('./utils/messages')  
 const Player = require('./models/player')
 const Board = require('./models/board')
+const Game = require('./models/game')
 let playerRoles = []
 
 const port = process.env.PORT || 3000
@@ -20,7 +21,20 @@ app.use(express.static(publicDirectoryPath))
 
 io.on('connection', (socket) => {
 
-    socket.on('join', (player, callback) => {
+    socket.on('join', async ({playerName, gameId}, callback) => {
+        const dupPlayer = await Player.findOne({username: playerName})
+
+        if (dupPlayer){
+            return callback({error:'Username is already taken. Try again.'})
+        }
+
+        const player = new Player({
+            username: playerName,
+            gameId,
+            socketId: socket.id
+        })
+
+        player.save()
 
         socket.join(player.gameId)
         playerRoles.forEach((role) => {
@@ -30,9 +44,8 @@ io.on('connection', (socket) => {
         socket.emit('message', generateMessage('Admin', `Welcome ${player.username}!`))
         socket.broadcast.to(player.gameId).emit('message', generateMessage('Admin', `${player.username} has joined!`))
 
-        callback()
+        callback({player})
     })
-
 
     socket.on('sendMessage', async ({message, playerId}, callback) => {
         const player = await Player.findOne({_id: playerId})
@@ -40,7 +53,6 @@ io.on('connection', (socket) => {
         io.to(player.gameId).emit('message', generateMessage(player.username, message))
         callback()
     })
-
 
     socket.on('new-role', async ({role, team, playerId}) => {
         const player = await Player.findOne({_id: playerId})
@@ -75,18 +87,18 @@ io.on('connection', (socket) => {
     })
 
 
-
-/*
-    Need a way to get player Id when event hits,  what is socket.id
-    socket.on('disconnect', async (playerId) => {
-        const player = await Player.deleteOne({_id: playerId})
+    socket.on('disconnect', async () => {
+        const player = await Player.deleteOne({socketId: socket.id})
 
         if (player) {
             io.to(player.gameId).emit('message', generateMessage('Admin', `${player.username} has left.`))
+            const remainingPlayers = await Player.find({gameId: player.gameId})
+            if (remainingPlayers.length === 0){
+                const game = await Game.deleteOne({gameId: player.gameId})
+                await Board.deleteMany({gameId: player.gameId})
+            }
         }
     })
-*/
-
 
 })
 

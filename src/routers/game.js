@@ -3,7 +3,7 @@ const router = new express.Router()
 const Game = require('../models/game')
 const Board = require('../models/board')
 const Player = require('../models/player')
-const { newWords, newOverlay, startTeam } = require('../utils/gameSetup')
+const { newWords, newOverlay, getStartTeam } = require('../utils/gameSetup')
 
 
 router.post('/games/:lobby', async (req, res) => {
@@ -22,7 +22,7 @@ router.post('/games/:lobby', async (req, res) => {
     const board = new Board({
         gameId: game._id,
         wordlist: newWords(),
-        startingTeam: startTeam(),
+        startTeam: getStartTeam(),
         overlay: newOverlay()
     })
 

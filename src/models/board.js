@@ -10,7 +10,7 @@ const boardSchema = new mongoose.Schema({
         type: Array,
         required: true
     },
-    startingTeam: {
+    startTeam: {
         type: String,
         required: true
     },

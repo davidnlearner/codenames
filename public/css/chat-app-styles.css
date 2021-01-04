@@ -119,6 +119,12 @@ button:disabled {
     margin-right: 8px;
 }
 
+.message p {
+    margin-top: 0px;
+    margin-bottom: 0px;
+
+}
+
 .message__meta {
     color: #777;
     font-size: 14px;

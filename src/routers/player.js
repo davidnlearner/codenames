@@ -9,8 +9,8 @@ router.post('/players', async (req, res) => {
     const gameId = req.body.gameId
     
     const player = new Player({
-        username: username,
-        gameId: gameId        
+        username,
+        gameId,
     })
 
     try {

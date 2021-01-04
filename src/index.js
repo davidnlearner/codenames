@@ -5,6 +5,8 @@ const http = require('http')
 const socketio = require('socket.io')
 const {generateMessage, generateLocationMessage} = require('./utils/messages')  
 const Player = require('./models/player')
+const Board = require('./models/board')
+let playerRoles = []
 
 const port = process.env.PORT || 3000
 
@@ -17,12 +19,13 @@ app.use(express.static(publicDirectoryPath))
 
 
 io.on('connection', (socket) => {
+
     socket.on('join', (player, callback) => {
 
-        // Duplicate error stuff originally was here
-        // Need to add it somewhere
-
         socket.join(player.gameId)
+        playerRoles.forEach((role) => {
+            socket.emit('new-player-role', role)
+        })
 
         socket.emit('message', generateMessage('Admin', `Welcome ${player.username}!`))
         socket.broadcast.to(player.gameId).emit('message', generateMessage('Admin', `${player.username} has joined!`))
@@ -30,40 +33,61 @@ io.on('connection', (socket) => {
         callback()
     })
 
-    socket.on('sendMessage', (message, callback) => {
-        const filter = new Filter()
 
-        //bad words filter   good model for filtering clue words
-        if(filter.isProfane(message)) {
-            return callback('Profanity is not allowed!')
-        }
+    socket.on('sendMessage', async ({message, playerId}, callback) => {
+        const player = await Player.findOne({_id: playerId})
 
         io.to(player.gameId).emit('message', generateMessage(player.username, message))
         callback()
     })
 
+
     socket.on('new-role', async ({role, team, playerId}) => {
         const player = await Player.findOne({_id: playerId})
-        io.to(player.gameId).emit('new-player-role', {role, team, username: player.username})        
+
+        playerRoles.push({role, team, username: player.username})
+
+        io.to(player.gameId).emit('new-player-role', {role, team, username: player.username})
+        io.to(player.gameId).emit('message', generateMessage('Admin', `${player.username} has become a ${role} for the ${team} team!`))       
     })
 
-/*
-    socket.on('disconnect', () => {
-        const user = removeUser(socket.id)
+    socket.on('sendClue', async ({clue, guessNumber, playerId}) => {
+        const player = await Player.findOne({_id: playerId})
+        io.to(player.gameId).emit('guessingPhase', {clue, guessNumber, team: player.team})
+        io.to(player.gameId).emit('message', generateMessage(player.username, `${clue} ${guessNumber}`))
+    })
 
-        if (user) {
-            io.to(user.room).emit('message', generateMessage('Admin', `${user.username} has left.`))
-            io.to(user.room).emit('roomData', {
-                room: user.room,
-                users: getUsersInRoom(user.room)
-            })
+    socket.on('guess', async ({ word, guessNumber, boardId, player }) => {
+        const board = await Board.findOne({_id: boardId})
+        const index = board.wordlist.indexOf(word)
+        const cardTeam = board.overlay[index]
+        io.to(player.gameId).emit('message', generateMessage('Admin', `${player.username} guessed ${word}`))
+        io.to(player.gameId).emit('message', generateMessage('Admin', `${word} belongs to the ${cardTeam} team.`))
+        io.to(player.gameId).emit('card-reveal', {cardTeam, word})
+        if (cardTeam === player.team && guessNumber !== 0){
+            io.to(player.gameId).emit('message', generateMessage('Admin', `The ${player.team} team has ${guessNumber} guesses left.`))
+            return callback(true)
         }
 
+        io.to(player.gameId).emit('message', generateMessage('Admin', `${player.team}'s turn is over.`))
+        callback(false)
+        io.to(player.gameId).emit('cluegiverPhase', {opposingTeam: player.team})
+    })
+
+
+
+/*
+    Need a way to get player Id when event hits,  what is socket.id
+    socket.on('disconnect', async (playerId) => {
+        const player = await Player.deleteOne({_id: playerId})
+
+        if (player) {
+            io.to(player.gameId).emit('message', generateMessage('Admin', `${player.username} has left.`))
+        }
     })
 */
 
 
-    
 })
 
 

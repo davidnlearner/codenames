@@ -1,14 +1,14 @@
 const express = require('express')
 const Board = require('../models/board')
 const router = new express.Router()
-const { newWords, newOverlay, startTeam } = require('../utils/gameSetup')
+const { newWords, newOverlay, getStartTeam } = require('../utils/gameSetup')
 
 
 router.post('/boards', async (req, res) => {
     const board = new Board({
         wordlist: newWords(),
-        startingTeam: startTeam(),
-        overlay: newOverlay(this.startingTeam),
+        startTeam: getStartTeam(),
+        overlay: newOverlay(this.startTeam),
         gameId: req.body.gameId
     })
     try{
@@ -33,7 +33,7 @@ router.get('/boards/:id/:role', async (req, res) => {
     const board = await Board.findOne({ _id: req.params.id })
     try {
         if ( role === 'guesser' ) {
-            return res.send({wordlist: board.wordlist})
+            return res.send({wordlist: board.wordlist, startTeam: board.startTeam})
         }
         res.send(board)
     } catch (e) {

@@ -8,7 +8,9 @@ const $messageFormInput = $messageForm.querySelector('input')
 const $messageFormButton = $messageForm.querySelector('button')
 const $messages = document.querySelector('#messages')
 
-const $showOverlay = document.querySelector('#show-overlay')
+const $clueForm = document.querySelector('#clue-form')
+const $clueFormInput = $clueForm.querySelectorAll('input')
+const $clueFormButton = $clueForm.querySelector('button')
 
 const $joinTeamButton = document.querySelectorAll('.team-join-btn')
 
@@ -23,10 +25,12 @@ const generateBoard = async (boardId, role) => {
     const response = await fetch(`/boards/${boardId}/${role}`)
     const data = await response.json()
 
+    sessionStorage.setItem('startTeam', data.startTeam)
+
     data.wordlist.forEach((word) => {
         const node = document.createElement('div')
         node.className = "card"
-        node.innerText = word
+        node.innerHTML = `<div class='card-word'><span>${word}</span></div>`
         $boardContainer.appendChild(node)
     });
 }
@@ -38,7 +42,7 @@ const updateBoard = async (boardId, role) => {
     const $boardCards = $boardContainer.querySelectorAll('.card')
 
     $boardCards.forEach((card, i) => {
-        card.classList.add(`${data.overlay[i]}-card`) 
+        card.classList.add(`${data.overlay[i]}-card`)
     })
 
 }
@@ -66,8 +70,6 @@ const getGameData = async (lobbyName) => {
     return data
 }
 
-
-// TO DO: CHECK FOR ASSIGN ROLES
 const joinGame = async (username, lobbyName) => {
     const game = await getGameData(lobbyName)
     sessionStorage.setItem('gameId', game._id)
@@ -80,7 +82,6 @@ const joinGame = async (username, lobbyName) => {
     sessionStorage.setItem('username', player.username)
     sessionStorage.setItem('playerId', player._id)
 
-    
     // finds and loads game board
     const boardRaw = await fetch(`/boards/game/${game._id}`)
     const board = await boardRaw.json()
@@ -97,6 +98,7 @@ const joinGame = async (username, lobbyName) => {
     })
 
 }
+
 
 // Chat App functions
 
@@ -124,24 +126,25 @@ const autoscroll = () => {
 }
 
 socket.on('message', (message) => {
-    console.log(message)
+    const username = message.username + ":"
     const html = Mustache.render(messageTemplate, {
         message: message.text,
-        username: message.username
+        // createdAt: moment(message.createdAt).format('hh:mm a'),
+        username
     })
     $messages.insertAdjacentHTML('beforeend', html)
     autoscroll()
 })
 
-// Still needs to be editted for this project
 $messageForm.addEventListener('submit', (e) => {
     e.preventDefault()
     // disable form
     $messageFormButton.setAttribute('disabled', 'disabled')
 
     const message = e.target.elements.message.value
+    const playerId = sessionStorage.getItem('playerId')
 
-    socket.emit('sendMessage', message, (error) => {
+    socket.emit('sendMessage', { message, playerId }, (error) => {
         // enable form
         $messageFormButton.removeAttribute('disabled')
         $messageFormInput.value = ''
@@ -155,35 +158,100 @@ $messageForm.addEventListener('submit', (e) => {
     })
 })
 
+// Role Assignment
+
 $joinTeamButton.forEach((button) => {
     button.addEventListener('click', async (e) => {
-        button.setAttribute('disabled', 'disabled')
-
         const role = e.target.getAttribute('role')
         const team = e.target.getAttribute('team')
-        
+        const startTeam = sessionStorage.getItem('startTeam')
+
+        $joinTeamButton.forEach((btn) => {
+            btn.setAttribute('disabled', 'disabled')
+        })
+
         const changes = { 'role': role, 'team': team }
         const playerId = sessionStorage.getItem('playerId')
         const response = await fetch(`/players/${playerId}`, { method: 'PATCH', headers: { "Content-Type": "application/json" }, body: JSON.stringify(changes) })
         const player = await response.json()
 
-        button.removeAttribute('disabled')
-
         if (player.role === 'cluegiver') {
             const boardId = sessionStorage.getItem('boardId')
             updateBoard(boardId, player.role)
+            $clueForm.style.display = 'block'
+            console.log(startTeam)
+            if ( player.team === startTeam){
+                console.log('hi')
+                $clueFormButton.removeAttribute('disabled')
+            }
+
         }
 
-        socket.emit('new-role', {role, team, playerId})
+        socket.emit('new-role', { role, team, playerId })
     })
 })
 
-
-socket.on('new-player-role', ({role, team, username}) => {
+socket.on('new-player-role', ({ role, team, username }) => {
     const wrapper = document.querySelector(`#${role}-${team}-wrapper`)
-    wrapper.innerHTML = `${username}`
+    wrapper.innerHTML = `<p id='role-username'> ${username} </p>`
 
 })
 
+// Game Events
+
+$clueForm.addEventListener('submit', (e) => {
+    e.preventDefault()
+
+    $clueFormButton.setAttribute('disabled', 'disabled')
+
+    const clue = e.target.elements.clue.value
+    const guessNumber = e.target.elements.guessNumber.value
+    const playerId = sessionStorage.getItem('playerId')
+
+    socket.emit('sendClue', { clue, guessNumber, playerId }, (error) => {
+        $clueFormInput[0].value = ''
+        $clueFormInput[1].value = ''
+
+        if (error) {
+            return console.log(error)
+        }
+
+        console.log('Clue delivered!')
+    })
+})
+
+socket.on('guessingPhase', async ({ clue, guessNumber, team }) => {
+    const playerId = sessionStorage.getItem('playerId')
+    const player = await fetch('/players', { method: 'GET', body: JSON.stringify({_id: playerId}) })
+
+    if (player.role === 'guesser' && player.team === team) {
+        const boardId = sessionStorage('boardId')
+        const $cards = document.querySelectorAll('.card')
+
+        $cards.forEach((card) => {
+            card.addEventListener('click', () => {
+                socket.emit('guess', { word: card.innerText, guessNumber: (guessNumber - 1), boardId, player }, (yourTurn) => {
+                    if (yourTurn === true) {
+                        //Continue somehow
+                    } else {
+                        $cards.forEach((card) => {
+                            card.removeEventListener('click')
+                        })
+                        socket.emit('cluePhase', { team })
+                    }
+                })
+            })
+        })
+    }
+})
+
+socket.on('cluegiverPhase', async ({ opposingTeam }) => {
+    const playerId = sessionStorage.getItem('playerId')
+    const player = await fetch('/players', { method: 'GET', body: JSON.stringify({_id: playerId}) })
+
+    if (player.role === 'cluegiver' && player.team !== opposingTeam) {
+        $clueFormButton.removeAttribute('disabled')
+    }
+})
 
 joinGame(username, lobbyName)

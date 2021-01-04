@@ -28,6 +28,15 @@ body{
     font-size: .8rem;
 }
 
+.card-word {
+    background-color: white;
+    color: black;
+    margin: auto;
+    padding: .7rem 0;
+    text-align: center;
+    width: 80%;
+}
+
 .red-card{
     background-color: var(--red-team-color);
     color: var(--team-card-text);
@@ -103,9 +112,30 @@ body{
     font-size: .7rem;
 }
 
+.team-info-box .role-wrapper {
+    align-self: center;
+    text-align: center;
+}
+
 .team-join-btn{
     border: 1px solid black;
     justify-self: center;
     margin: auto;
     padding: .75rem 4rem;
+}
+
+.team-info-box p {
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: bold;
+    font-size: 1rem;
+    padding: .8rem;
+}
+
+
+#clue-form {
+    display: none;
+    background-color:  rgb(104, 135, 141);
+    border: 1px solid black;
+    border-radius: 10px;
+    padding: 1rem;
 }

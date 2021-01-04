@@ -23,7 +23,7 @@ const newWords = () => {
   return gameWords
 }
 
-const startTeam = () => {
+const getStartTeam = () => {
   const team = Math.round(Math.random())
   if(team === 1) {
     return 'red'
@@ -61,5 +61,5 @@ const newOverlay = (startTeam) => {
 module.exports = {
   newWords,
   newOverlay,
-  startTeam
+  getStartTeam
 }

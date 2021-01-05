@@ -70,12 +70,12 @@ const getGameData = async (lobbyName) => {
     const game = await gameRaw.json()
     if (game.msg === 'no game found') {
         return newGame(lobbyName)
-    }
-
+    } else {
     const boardRaw = await fetch(`/boards/game/${game._id}`)
     const board = await boardRaw.json()
 
     return { game, board }
+    }
 }
 
 const joinGame = async (username, lobbyName) => {
@@ -181,7 +181,6 @@ $joinTeamButton.forEach((button) => {
             $clueForm.style.display = 'block'
             console.log(startTeam)
             if ( player.team === startTeam){
-                console.log('hi')
                 $clueFormButton.removeAttribute('disabled')
             }
 
@@ -221,19 +220,18 @@ $clueForm.addEventListener('submit', (e) => {
 })
 
 socket.on('guessingPhase', async ({ clue, guessNumber, team }) => {
+    console.log('guessingPhase')
     const playerId = sessionStorage.getItem('playerId')
     const player = await fetch('/players', { method: 'GET', body: JSON.stringify({_id: playerId}) })
 
     if (player.role === 'guesser' && player.team === team) {
         const boardId = sessionStorage('boardId')
-        const $cards = document.querySelectorAll('.card')
-
+        const $cards = document.querySelectorAll(".card [revealed = 'false']")
+        //  ADD CODE HERE
         $cards.forEach((card) => {
             card.addEventListener('click', () => {
-                socket.emit('guess', { word: card.innerText, guessNumber: (guessNumber - 1), boardId, player }, (yourTurn) => {
-                    if (yourTurn === true) {
-                        //Continue somehow
-                    } else {
+                socket.emit('handleGuess', { word: card.innerText, guessNumber: (guessNumber - 1), boardId, player, card }, (yourTurn) => {
+                    if (yourTurn === false) {
                         $cards.forEach((card) => {
                             card.removeEventListener('click')
                         })
@@ -251,6 +249,24 @@ socket.on('cluegiverPhase', async ({ opposingTeam }) => {
 
     if (player.role === 'cluegiver' && player.team !== opposingTeam) {
         $clueFormButton.removeAttribute('disabled')
+    }
+})
+
+
+// NEEDS WORK
+socket.on('card-reveal', ({cardTeam, card}) => {
+    card.classList.add(`${cardTeam}-card`)
+    card.styles.setAttribute(`revealed`, 'true')
+    card.styles.setAttribute(`opacity`, '0.4')
+    card.removeEventListener('click')
+
+})
+
+socket.on('update-score', ({cardTeam}) => {
+    const $counter = document.querySelector(`${cardTeam}-team-counter`)
+    $counter.innerHTML = $counter.innerHTML - 1
+    if ($counter.innerHTML === 0) {
+        socket.emit('victory', {cardTeam})   // <------- Need to create 'victory' in index.js and exit handleGuess if this is true
     }
 })
 

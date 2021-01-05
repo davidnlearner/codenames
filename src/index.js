@@ -21,7 +21,8 @@ app.use(express.static(publicDirectoryPath))
 io.on('connection', (socket) => {
 
     socket.on('join', async ({playerName, gameId}, callback) => {
-        const dupPlayer = await Player.findOne({username: playerName})
+
+        const dupPlayer = await Player.findOne({username: playerName, gameId})
         const game = await Game.findOne({_id: gameId})
 
         if (dupPlayer){
@@ -37,8 +38,6 @@ io.on('connection', (socket) => {
         player.save()
 
         socket.join(player.gameId)
-
-
 
         game.playerRoles.forEach((role) => {
             socket.emit('new-player-role', role)
@@ -74,16 +73,20 @@ io.on('connection', (socket) => {
         io.to(player.gameId).emit('message', generateMessage(player.username, `${clue} ${guessNumber}`))
     })
 
-    socket.on('guess', async ({ word, guessNumber, boardId, player }) => {
+    socket.on('handleGuess', async ({ word, guessNumber, boardId, player, card }) => {
         const board = await Board.findOne({_id: boardId})
         const index = board.wordlist.indexOf(word)
         const cardTeam = board.overlay[index]
         io.to(player.gameId).emit('message', generateMessage('Admin', `${player.username} guessed ${word}`))
         io.to(player.gameId).emit('message', generateMessage('Admin', `${word} belongs to the ${cardTeam} team.`))
-        io.to(player.gameId).emit('card-reveal', {cardTeam, word})
-        if (cardTeam === player.team && guessNumber !== 0){
+        io.to(player.gameId).emit('card-reveal', {cardTeam, card})
+       
+        if (cardTeam === player.team){
+            io.to(player.gameId).emit('update-score', {cardTeam})
+            if (guessNumber !== 0) {
             io.to(player.gameId).emit('message', generateMessage('Admin', `The ${player.team} team has ${guessNumber} guesses left.`))
             return callback(true)
+            }
         }
 
         io.to(player.gameId).emit('message', generateMessage('Admin', `${player.team}'s turn is over.`))
@@ -93,14 +96,15 @@ io.on('connection', (socket) => {
 
 
     socket.on('disconnect', async () => {
-        const player = await Player.deleteOne({socketId: socket.id})
+        const player = await Player.findOneAndDelete({socketId: socket.id})
         
         if (player) {
+            console.log('disconnect ' + player.username)
             io.to(player.gameId).emit('message', generateMessage('Admin', `${player.username} has left.`))
             const remainingPlayers = await Player.find({gameId: player.gameId})
             if (remainingPlayers.length === 0){
-                await Game.deleteOne({gameId: player.gameId})
-                await Board.deleteOne({gameId: player.gameId})
+                await Game.findOneAndDelete({gameId: player.gameId})
+                await Board.findOneAndDelete({gameId: player.gameId})
             } else {
                 const game = await Game.findOne({_id: player.gameId})
                 game.playerRoles = game.playerRoles.filter((eachPlayer) => {eachPlayer.username != player.username})

@@ -31,6 +31,15 @@ router.get('/players', async (req, res) => {
     }
 })
 
+router.get('/players/:id', async (req, res) => {
+    const player = await Player.findOne({_id: req.params._id})
+    try {
+        res.send(player)
+    } catch (e) {
+        res.status(500).send(e)
+    }
+})
+
 router.patch('/players/:id', async (req, res) => {
     const updates = Object.keys(req.body)
     const allowedUpdates = ['role', 'team']

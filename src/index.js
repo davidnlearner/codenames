@@ -103,7 +103,7 @@ io.on('connection', (socket) => {
             io.to(player.gameId).emit('message', generateMessage('Admin', `${player.username} has left.`))
             const remainingPlayers = await Player.find({gameId: player.gameId})
             if (remainingPlayers.length === 0){
-                await Game.findOneAndDelete({gameId: player.gameId})
+                await Game.findOneAndDelete({_id: player.gameId})
                 await Board.findOneAndDelete({gameId: player.gameId})
             } else {
                 const game = await Game.findOne({_id: player.gameId})
@@ -112,6 +112,23 @@ io.on('connection', (socket) => {
             }
         }
         
+    })
+
+    socket.on('leave-game', async ({playerId}) => {
+        const player = await Player.findOneAndDelete({_id: playerId})
+        if (player) {
+            console.log('disconnect ' + player.username)
+            io.to(player.gameId).emit('message', generateMessage('Admin', `${player.username} has left.`))
+            const remainingPlayers = await Player.find({gameId: player.gameId})
+            if (remainingPlayers.length === 0){
+                await Game.findOneAndDelete({_id: player.gameId})
+                await Board.findOneAndDelete({gameId: player.gameId})
+            } else {
+                const game = await Game.findOne({_id: player.gameId})
+                game.playerRoles = game.playerRoles.filter((eachPlayer) => {eachPlayer.username != player.username})
+                game.save()
+            }
+        }
     })
 
 })

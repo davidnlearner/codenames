@@ -14,8 +14,6 @@ const $clueFormButton = $clueForm.querySelector('button')
 
 const $joinTeamButton = document.querySelectorAll('.team-join-btn')
 
-const $endGameButton = document.querySelector('#end-game-btn')
-
 // Templates
 const messageTemplate = document.querySelector('#message-template').innerHTML
 
@@ -38,6 +36,7 @@ const generateBoard = async (boardId) => {
     data.wordlist.forEach((word) => {
         const node = document.createElement('div')
         node.className = "card"
+        node.id = `${word}`
         node.innerHTML = `<div class='card-word'><span>${word}</span></div>`
         $boardContainer.appendChild(node)
     });
@@ -292,13 +291,14 @@ socket.on('guessingPhase', async ({ clue, guessNumber, team }) => {
     if (player.role === 'guesser' && player.team === team) {
         console.log('Active guesser found')
 
-        const boardId = sessionStorage('boardId')
-        // $cards is all cards that have not been previously guessed
-        const $cards = document.querySelectorAll(".card [revealed = 'false']")
+        const boardId = sessionStorage.getItem('boardId')
+        //const $cards = document.querySelectorAll(".card [revealed = 'false']")
+        const $cards = document.querySelectorAll(".card")
 
         // Adds event listener to unrevealed cards that sends card as guess on click
         $cards.forEach((card) => {
             card.addEventListener('click', () => {
+                console.log('event listener added')
                 // Reveals card team to all players and checks if card belongs to user's team 
                 socket.emit('handleGuess', { word: card.innerText, guessNumber: (guessNumber - 1), boardId, player, card }, (yourTurn) => {
                     // Ends turn if out of guesses or bad guess
@@ -327,26 +327,28 @@ socket.on('cluegiverPhase', async ({ opposingTeam }) => {
 
 // Changes css on revealed cards
 // NEEDS WORK
-socket.on('card-reveal', ({cardTeam, card}) => {
+socket.on('card-reveal', ({cardTeam, word}) => {
+    const card = document.querySelector(`#${word}`)
+    console.log(card)
     card.classList.add(`${cardTeam}-card`)
-    card.styles.setAttribute(`revealed`, 'true')
-    card.styles.setAttribute(`opacity`, '0.4')
+    card.style.setAttribute(`revealed`, 'true')
+    card.style.setAttribute(`opacity`, '0.4')
     card.removeEventListener('click')
 
 })
 
 socket.on('update-score', ({cardTeam}) => {
     const $counter = document.querySelector(`${cardTeam}-team-counter`)
-    $counter.innerHTML = $counter.innerHTML - 1
-    if ($counter.innerHTML === 0) {
+    $counter.innerText = $counter.innerText - 1
+    if ($counter.innerText === 0) {
         socket.emit('victory', {cardTeam})   // <------- Need to create 'victory' in index.js and exit handleGuess if this is true
     }
 })
 
 
-$endGameButton.addEventListener('click', () => {
+document.querySelector('#leave-game-btn').addEventListener('click', () => {
     const playerId = sessionStorage.getItem('playerId')
-    socket.emit('end-game', {playerId})
+    socket.emit('leave-game', {playerId})
     location.href = '/'
 })
 

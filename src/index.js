@@ -79,7 +79,7 @@ io.on('connection', (socket) => {
         const cardTeam = board.overlay[index]
         io.to(player.gameId).emit('message', generateMessage('Admin', `${player.username} guessed ${word}`))
         io.to(player.gameId).emit('message', generateMessage('Admin', `${word} belongs to the ${cardTeam} team.`))
-        io.to(player.gameId).emit('card-reveal', {cardTeam, card})
+        io.to(player.gameId).emit('card-reveal', {cardTeam, word})
        
         if (cardTeam === player.team){
             io.to(player.gameId).emit('update-score', {cardTeam})

@@ -32,7 +32,7 @@ router.get('/players', async (req, res) => {
 })
 
 router.get('/players/:id', async (req, res) => {
-    const player = await Player.findOne({_id: req.params._id})
+    const player = await Player.findOne({_id: req.params.id})
     try {
         res.send(player)
     } catch (e) {

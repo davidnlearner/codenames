@@ -143,7 +143,9 @@ const joinGame = async (username, lobbyName) => {
     const message = 'The ' + startTeam + ' Team will go first.'
     socket.emit('sendJoinMessage', {message, name: 'Admin'})
 
-
+    // Set cards remaining
+    const $counter = document.querySelector(`#${rawStartTeam}-team-counter`)
+    $counter.innerText = parseInt($counter.innerText) + 1
 }
 
 
@@ -311,13 +313,15 @@ socket.on('guessingPhase', async ({ clue, guessNumber, team }) => {
             card.addEventListener('click', () => {
                 const boardId = sessionStorage.getItem('boardId')
                 // Reveals card team to all players and checks if card belongs to user's team 
-                socket.emit('handleGuess', { word: card.innerText, guessNumber: (guessNumber - 1), boardId, player, card }, (yourTurn) => {
+                socket.emit('handleGuess', { word: card.innerText, guessNumber: guessNumber - 1, boardId, player, card }, (yourTurn) => {
                     // Ends turn if out of guesses or bad guess
                     if (yourTurn === false) {
                         $cards.forEach((card) => {
                             card.removeEventListener('click')
                         })
                         socket.emit('cluePhase', { team })
+                    } else {
+                        guessNumber -= 1
                     }
                 })
             })
@@ -349,14 +353,14 @@ socket.on('card-reveal', ({cardTeam, word}) => {
 
 })
 
+// Updates cards remaining in teambox on card reveal
 socket.on('update-score', ({cardTeam}) => {
-    const $counter = document.querySelector(`${cardTeam}-team-counter`)
-    $counter.innerHTML = $counter.innerHTML - 1
+    const $counter = document.querySelector(`#${cardTeam}-team-counter`)
+    $counter.innerText = parseInt($counter.innerText) - 1
     if ($counter.innerText === 0) {
         socket.emit('victory', {cardTeam})   // <------- Need to create 'victory' in index.js and exit handleGuess if this is true
     }
 })
-
 
 document.querySelector('#leave-game-btn').addEventListener('click', () => {
     const playerId = sessionStorage.getItem('playerId')

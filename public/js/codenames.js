@@ -36,7 +36,7 @@ const generateBoard = async (boardId) => {
     data.wordlist.forEach((word) => {
         const node = document.createElement('div')
         node.className = "card"
-        node.id = `${word}`
+        node.id = `${word}-card-id`
         node.innerHTML = `<div class='card-word'><span>${word}</span></div>`
         $boardContainer.appendChild(node)
     });
@@ -135,17 +135,13 @@ const joinGame = async (username, lobbyName) => {
     // Current board Id written into session storage
     sessionStorage.setItem('boardId', board._id)
     // Gets board and displays it to user
-    generateBoard(board._id)
+    await generateBoard(board._id)
 
-
-    // Something to send start team message to chat
-    // This has issues
-    // const startTeam = sessionStorage.getItem('startTeam')
-    // const message = 'The ' + startTeam + ' Team goes first.'
-    // const playerId = sessionStorage.getItem('playerId')
-    // socket.emit('sendMessage', {message, playerId}, () => {
-    //     return
-    // })
+    // Start team message
+    const rawStartTeam = sessionStorage.getItem('startTeam')
+    const startTeam = rawStartTeam.charAt(0).toUpperCase() + rawStartTeam.slice(1)
+    const message = 'The ' + startTeam + ' Team will go first.'
+    socket.emit('sendJoinMessage', {message, name: 'Admin'})
 
 
 }
@@ -193,9 +189,11 @@ $messageForm.addEventListener('submit', (e) => {
     $messageFormButton.setAttribute('disabled', 'disabled')
 
     const message = e.target.elements.message.value
-    const playerId = sessionStorage.getItem('playerId')
+    const playerName = sessionStorage.getItem('username')
+    const gameId = sessionStorage.getItem('gameId')
+    console.log(playerName)
 
-    socket.emit('sendMessage', { message, playerId }, (error) => {
+    socket.emit('sendMessage', { message, name: playerName, gameId }, (error) => {
         // enable form
         $messageFormButton.removeAttribute('disabled')
         $messageFormInput.value = ''
@@ -237,6 +235,8 @@ $joinTeamButton.forEach((button) => {
             // disables clueform if they aren't the starting player
             if ( player.team === startTeam){
                 $clueFormButton.removeAttribute('disabled')
+                const message = `It is ${player.username}'s turn to give a clue.`
+                socket.emit('sendMessage', {message, name: 'Admin', gameId: player.gameId})
             }
 
         }
@@ -276,29 +276,40 @@ $clueForm.addEventListener('submit', (e) => {
     })
 })
 
+// Event cards are given below
+// Unused
+const cardEvent = ($cards, card, guessNumber, player) => {
+    const boardId = sessionStorage.getItem('boardId')
+    // Reveals card team to all players and checks if card belongs to user's team 
+    socket.emit('handleGuess', { word: card.innerText, guessNumber: (guessNumber - 1), boardId, player, card }, (yourTurn) => {
+        // Ends turn if out of guesses or bad guess
+        if (yourTurn === false) {
+            $cards.forEach((card) => {
+                card.removeEventListener('click')
+            })
+            socket.emit('cluePhase', { team })
+        }
+    })
+}
 
 // Allows guessers to make guesses by clicking on cards
 socket.on('guessingPhase', async ({ clue, guessNumber, team }) => {
     console.log('gussingPhase')
     const playerId = sessionStorage.getItem('playerId')
-    //const player = await fetch('/players', { method: 'GET', headers: { "Content-Type": "application/json" }, body: JSON.stringify({_id: playerId}) })
     const playerRaw = await fetch(`/players/${playerId}`)
     const player = await playerRaw.json()
 
     // Checks if it's this user's turn
-    console.log(`role: ${player.role} team: ${player.team}`)
-
     if (player.role === 'guesser' && player.team === team) {
-        console.log('Active guesser found')
+        socket.emit('sendMessage', {message: `It is ${player.username}'s turn to guess`, name: 'Admin', gameId: player.gameId})
 
-        const boardId = sessionStorage.getItem('boardId')
         //const $cards = document.querySelectorAll(".card [revealed = 'false']")
         const $cards = document.querySelectorAll(".card")
 
         // Adds event listener to unrevealed cards that sends card as guess on click
         $cards.forEach((card) => {
             card.addEventListener('click', () => {
-                console.log('event listener added')
+                const boardId = sessionStorage.getItem('boardId')
                 // Reveals card team to all players and checks if card belongs to user's team 
                 socket.emit('handleGuess', { word: card.innerText, guessNumber: (guessNumber - 1), boardId, player, card }, (yourTurn) => {
                     // Ends turn if out of guesses or bad guess
@@ -317,29 +328,30 @@ socket.on('guessingPhase', async ({ clue, guessNumber, team }) => {
 // Unlocks clueform for next cluegiver
 socket.on('cluegiverPhase', async ({ opposingTeam }) => {
     const playerId = sessionStorage.getItem('playerId')
-    const player = await fetch('/players', { method: 'GET', body: JSON.stringify({_id: playerId}) })
+    const playerRaw = await fetch(`/players/${playerId}`)
+    const player = await playerRaw.json()
 
     if (player.role === 'cluegiver' && player.team !== opposingTeam) {
         $clueFormButton.removeAttribute('disabled')
+        const message = `It is ${player.username}'s turn to give a clue.`
+        const gameId = sessionStorage.getItem('gameId')
+        socket.emit('sendMessage', {message, name: 'Admin', gameId: player.gameId})
     }
 })
 
-
 // Changes css on revealed cards
-// NEEDS WORK
 socket.on('card-reveal', ({cardTeam, word}) => {
-    const card = document.querySelector(`#${word}`)
+    const card = document.querySelector(`#${word}-card-id`)
     console.log(card)
     card.classList.add(`${cardTeam}-card`)
-    card.style.setAttribute(`revealed`, 'true')
-    card.style.setAttribute(`opacity`, '0.4')
-    card.removeEventListener('click')
+    card.setAttribute(`revealed`, 'true')
+    card.removeEventListener('click', cardEvent)
 
 })
 
 socket.on('update-score', ({cardTeam}) => {
     const $counter = document.querySelector(`${cardTeam}-team-counter`)
-    $counter.innerText = $counter.innerText - 1
+    $counter.innerHTML = $counter.innerHTML - 1
     if ($counter.innerText === 0) {
         socket.emit('victory', {cardTeam})   // <------- Need to create 'victory' in index.js and exit handleGuess if this is true
     }

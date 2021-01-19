@@ -43,17 +43,17 @@ io.on('connection', (socket) => {
             socket.emit('new-player-role', role)
         })
 
-        socket.emit('message', generateMessage('Admin', `Welcome ${player.username}!`))
         socket.broadcast.to(player.gameId).emit('message', generateMessage('Admin', `${player.username} has joined!`))
-
         callback({player})
     })
 
-    socket.on('sendMessage', async ({message, playerId}, callback) => {
-        const player = await Player.findOne({_id: playerId})
+    socket.on('sendMessage', ({message, name, gameId}) => {
+        io.to(gameId).emit('message', generateMessage(name, message))
+    })
 
-        io.to(player.gameId).emit('message', generateMessage(player.username, message))
-        callback()
+    socket.on('sendJoinMessage', ({message, name}) => {
+        socket.emit('message', generateMessage('Admin', `Welcome ${name}!`))
+        socket.emit('message', generateMessage(name, message))
     })
 
     socket.on('new-role', async ({role, team, playerId}) => {
@@ -73,7 +73,7 @@ io.on('connection', (socket) => {
         io.to(player.gameId).emit('message', generateMessage(player.username, `${clue} ${guessNumber}`))
     })
 
-    socket.on('handleGuess', async ({ word, guessNumber, boardId, player, card }) => {
+    socket.on('handleGuess', async ({ word, guessNumber, boardId, player, card }, callback) => {
         const board = await Board.findOne({_id: boardId})
         const index = board.wordlist.indexOf(word)
         const cardTeam = board.overlay[index]
@@ -99,7 +99,6 @@ io.on('connection', (socket) => {
         const player = await Player.findOneAndDelete({socketId: socket.id})
         
         if (player) {
-            console.log('disconnect ' + player.username)
             io.to(player.gameId).emit('message', generateMessage('Admin', `${player.username} has left.`))
             const remainingPlayers = await Player.find({gameId: player.gameId})
             if (remainingPlayers.length === 0){

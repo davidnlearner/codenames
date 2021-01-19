@@ -105,6 +105,7 @@ button:disabled {
     padding: 24px 24px 0 24px;
     overflow-y: scroll;
     background-color: rgb(104, 135, 141);
+    max-height: 50rem;
 }
 
 /* Message Styles */

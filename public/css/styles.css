@@ -30,7 +30,10 @@ body{
     border-radius: .5rem;
     font-family: 'SkyFall';
     font-size: .8rem;
+}
 
+.card [revealed = true] {
+    opacity: 0.4;
 }
 
 .card-word {

@@ -280,23 +280,24 @@ $clueForm.addEventListener('submit', (e) => {
 
 // Event cards are given below
 // Unused
-const cardEvent = ($cards, card, guessNumber, player) => {
+const cardEvent = ({ $cards, word, guessNumber, player }) => {
     const boardId = sessionStorage.getItem('boardId')
     // Reveals card team to all players and checks if card belongs to user's team 
-    socket.emit('handleGuess', { word: card.innerText, guessNumber: (guessNumber - 1), boardId, player, card }, (yourTurn) => {
+    socket.emit('handleGuess', { word, guessNumber, boardId, player }, (yourTurn) => {
         // Ends turn if out of guesses or bad guess
         if (yourTurn === false) {
             $cards.forEach((card) => {
-                card.removeEventListener('click')
+                card.removeEventListener('click', cardEvent)
             })
             socket.emit('cluePhase', { team })
+        }  else {
+            guessNumber -= 1
         }
     })
 }
 
 // Allows guessers to make guesses by clicking on cards
 socket.on('guessingPhase', async ({ clue, guessNumber, team }) => {
-    console.log('gussingPhase')
     const playerId = sessionStorage.getItem('playerId')
     const playerRaw = await fetch(`/players/${playerId}`)
     const player = await playerRaw.json()
@@ -309,23 +310,7 @@ socket.on('guessingPhase', async ({ clue, guessNumber, team }) => {
         const $cards = document.querySelectorAll(".card")
 
         // Adds event listener to unrevealed cards that sends card as guess on click
-        $cards.forEach((card) => {
-            card.addEventListener('click', () => {
-                const boardId = sessionStorage.getItem('boardId')
-                // Reveals card team to all players and checks if card belongs to user's team 
-                socket.emit('handleGuess', { word: card.innerText, guessNumber: guessNumber - 1, boardId, player, card }, (yourTurn) => {
-                    // Ends turn if out of guesses or bad guess
-                    if (yourTurn === false) {
-                        $cards.forEach((card) => {
-                            card.removeEventListener('click')
-                        })
-                        socket.emit('cluePhase', { team })
-                    } else {
-                        guessNumber -= 1
-                    }
-                })
-            })
-        })
+        $cards.forEach((card) => card.addEventListener('click', function () { cardEvent({ $cards, word: card.innerText, guessNumber, player }) } ))
     }
 })
 

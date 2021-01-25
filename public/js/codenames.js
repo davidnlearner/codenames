@@ -20,6 +20,34 @@ const messageTemplate = document.querySelector('#message-template').innerHTML
 // Options
 const { username, lobbyName } = Qs.parse(location.search, { ignoreQueryPrefix: true })
 
+let currentGuesses = -1
+let guessEnabled = false
+
+
+
+
+// Event cards are given
+const cardEvent = async (word) => {
+    const $cards = document.querySelectorAll(".card")
+    const boardId = sessionStorage.getItem('boardId')
+
+    const playerId = sessionStorage.getItem('playerId')
+    const playerRaw = await fetch(`/players/${playerId}`)
+    const player = await playerRaw.json()
+
+    // Reveals card team to all players and checks if card belongs to user's team 
+    socket.emit('handleGuess', { word, guessNumber: currentGuesses, boardId, player }, (yourTurn) => {
+        // Ends turn if out of guesses or bad guess
+        if (yourTurn === false) {
+            // end turn somehow?
+            currentGuesses = -1
+            socket.emit('cluePhase', { team })
+        } else {
+            currentGuesses -= 1
+            guessEnabled = true
+        }
+    })
+}
 
 // Calls current board from database and displays
 // Can be made into an import
@@ -37,9 +65,18 @@ const generateBoard = async (boardId) => {
         const node = document.createElement('div')
         node.className = "card"
         node.id = `${word}-card-id`
+        node.setAttribute(`revealed`, 'false')
         node.innerHTML = `<div class='card-word'><span>${word}</span></div>`
         $boardContainer.appendChild(node)
     });
+
+    $('.card').on('click', function () {
+        const element = $(this)
+        if (element.attr('revealed') === 'false' && guessEnabled) {
+            guessEnabled = false
+            cardEvent(element.text())
+        }
+    })
 }
 
 
@@ -78,14 +115,14 @@ const newBoard = async (gameId) => {
 // Can be made into an import
 const newGame = async (lobbyName) => {
     // Creates new game 'lobbyName'
-    const gameRaw = await fetch(`/games`, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({lobbyName})})
+    const gameRaw = await fetch(`/games`, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lobbyName }) })
     const game = await gameRaw.json()
 
     // Creates a new board tied to newly created game
-    const boardRaw = await fetch(`/boards`, {method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ gameId: game._id }) })
+    const boardRaw = await fetch(`/boards`, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ gameId: game._id }) })
     const board = await boardRaw.json()
 
-    return {game, board}
+    return { game, board }
 }
 
 
@@ -112,7 +149,7 @@ const getGameData = async (lobbyName) => {
 // Starting function
 const joinGame = async (username, lobbyName) => {
     // Gets game with name 'lobbyName' and its current board or if none found creates a new game with that name
-    const {game, board} = await getGameData(lobbyName)
+    const { game, board } = await getGameData(lobbyName)
     const gameId = game._id
     // Stores gameId in session storage
     sessionStorage.setItem('gameId', gameId)
@@ -120,7 +157,7 @@ const joinGame = async (username, lobbyName) => {
     // Sends socket call to server for new player, returns them to home page if name was already taken
     // Should refactor code to prevent entry altogether eventually
     // Would require html changes to start
-    socket.emit('join', {playerName: username, gameId}, ({error, player}) => {
+    socket.emit('join', { playerName: username, gameId }, ({ error, player }) => {
         if (error) {
             alert(error)
             location.href = '/'
@@ -141,7 +178,7 @@ const joinGame = async (username, lobbyName) => {
     const rawStartTeam = sessionStorage.getItem('startTeam')
     const startTeam = rawStartTeam.charAt(0).toUpperCase() + rawStartTeam.slice(1)
     const message = 'The ' + startTeam + ' Team will go first.'
-    socket.emit('sendJoinMessage', {message, name: 'Admin'})
+    socket.emit('sendJoinMessage', { message, name: 'Admin' })
 
     // Set cards remaining
     const $counter = document.querySelector(`#${rawStartTeam}-team-counter`)
@@ -234,11 +271,11 @@ $joinTeamButton.forEach((button) => {
             const boardId = sessionStorage.getItem('boardId')
             addBoardOverlay(boardId, player.role)
             $clueForm.style.display = 'block'
-            // disables clueform if they aren't the starting player
-            if ( player.team === startTeam){
-                $clueFormButton.removeAttribute('disabled')
+            if (player.team === startTeam) {
+                //$clueFormButton.removeAttribute('disabled')
                 const message = `It is ${player.username}'s turn to give a clue.`
-                socket.emit('sendMessage', {message, name: 'Admin', gameId: player.gameId})
+                socket.emit('sendMessage', { message, name: 'Admin', gameId: player.gameId })
+                socket.emit('updateActivePlayer', { name: player.username, gameId: player.gameId })
             }
 
         }
@@ -254,6 +291,11 @@ socket.on('new-player-role', ({ role, team, username }) => {
 
 })
 
+socket.on('reset-player-role', ({ role, team }) => {
+    const wrapper = document.querySelector(`#${role}-${team}-wrapper`)
+    wrapper.innerHTML = `<button team='blue' role='cluegiver' class="team-join-btn">Join</button>`
+})
+
 // Game Events
 
 // Sends clue to other players through chat message, changes game state to guessing phase
@@ -267,91 +309,101 @@ $clueForm.addEventListener('submit', (e) => {
     const playerId = sessionStorage.getItem('playerId')
 
     socket.emit('sendClue', { clue, guessNumber, playerId }, (error) => {
-        $clueFormInput[0].value = ''
-        $clueFormInput[1].value = ''
+        $clueForm.reset()
 
         if (error) {
             return console.log(error)
         }
-
-        console.log('Clue delivered!')
     })
 })
 
-// Event cards are given below
-// Unused
-const cardEvent = ({ $cards, word, guessNumber, player }) => {
-    const boardId = sessionStorage.getItem('boardId')
-    // Reveals card team to all players and checks if card belongs to user's team 
-    socket.emit('handleGuess', { word, guessNumber, boardId, player }, (yourTurn) => {
-        // Ends turn if out of guesses or bad guess
-        if (yourTurn === false) {
-            $cards.forEach((card) => {
-                card.removeEventListener('click', cardEvent)
-            })
-            socket.emit('cluePhase', { team })
-        }  else {
-            guessNumber -= 1
-        }
-    })
-}
 
 // Allows guessers to make guesses by clicking on cards
-socket.on('guessingPhase', async ({ clue, guessNumber, team }) => {
+socket.on('guessingPhase', async ({ guessNumber, team }) => {
     const playerId = sessionStorage.getItem('playerId')
     const playerRaw = await fetch(`/players/${playerId}`)
     const player = await playerRaw.json()
 
     // Checks if it's this user's turn
     if (player.role === 'guesser' && player.team === team) {
-        socket.emit('sendMessage', {message: `It is ${player.username}'s turn to guess`, name: 'Admin', gameId: player.gameId})
-
-        //const $cards = document.querySelectorAll(".card [revealed = 'false']")
-        const $cards = document.querySelectorAll(".card")
-
-        // Adds event listener to unrevealed cards that sends card as guess on click
-        $cards.forEach((card) => card.addEventListener('click', function () { cardEvent({ $cards, word: card.innerText, guessNumber, player }) } ))
+        currentGuesses = guessNumber
+        guessEnabled = true
+        const message = `It is ${player.username}'s turn to guess`
+        socket.emit('sendMessage', { message, name: 'Admin', gameId: player.gameId })
+        socket.emit('updateActivePlayer', { name: player.username, gameId: player.gameId })
     }
 })
 
 // Unlocks clueform for next cluegiver
-socket.on('cluegiverPhase', async ({ opposingTeam }) => {
+socket.on('cluegiverPhase', async ({ activeTeam }) => {
     const playerId = sessionStorage.getItem('playerId')
     const playerRaw = await fetch(`/players/${playerId}`)
     const player = await playerRaw.json()
 
-    if (player.role === 'cluegiver' && player.team !== opposingTeam) {
+    if (player.role === 'cluegiver' && player.team === activeTeam) {
         $clueFormButton.removeAttribute('disabled')
         const message = `It is ${player.username}'s turn to give a clue.`
         const gameId = sessionStorage.getItem('gameId')
-        socket.emit('sendMessage', {message, name: 'Admin', gameId: player.gameId})
+        socket.emit('sendMessage', { message, name: 'Admin', gameId: player.gameId })
+        socket.emit('updateActivePlayer', { name: player.username, gameId: player.gameId,  })
+
     }
 })
 
 // Changes css on revealed cards
-socket.on('card-reveal', ({cardTeam, word}) => {
+socket.on('card-reveal', ({ cardTeam, word }) => {
     const card = document.querySelector(`#${word}-card-id`)
-    console.log(card)
     card.classList.add(`${cardTeam}-card`)
     card.setAttribute(`revealed`, 'true')
-    card.removeEventListener('click', cardEvent)
-
 })
 
 // Updates cards remaining in teambox on card reveal
-socket.on('update-score', ({cardTeam}) => {
+socket.on('update-score', ({ cardTeam }) => {
     const $counter = document.querySelector(`#${cardTeam}-team-counter`)
     $counter.innerText = parseInt($counter.innerText) - 1
-    if ($counter.innerText === 0) {
-        socket.emit('victory', {cardTeam})   // <------- Need to create 'victory' in index.js and exit handleGuess if this is true
+
+    if ($counter.innerText === '0') {
+        //WIN
+        teamVictory(cardTeam)
     }
 })
 
-document.querySelector('#leave-game-btn').addEventListener('click', () => {
+socket.on('assassin-game-over', ({ opposingTeam }) => {
+    teamVictory(opposingTeam)
+})
+
+const teamVictory = (team) => {
+    const msg = `The ${team} team wins!`
+    $('.victory-msg').text(msg)
+    $('#victory-menu').css("display", "grid")
+    $("#game-status-box").css("display", "none")
+}
+
+$('.leave-game-btn').on('click', () => {
     const playerId = sessionStorage.getItem('playerId')
-    socket.emit('leave-game', {playerId})
+    socket.emit('leave-game', { playerId })
     location.href = '/'
 })
+
+
+// Changes text in game status box
+socket.on('updateGameStatus', (changes) => {
+    Object.keys(changes).forEach((update) => {
+        $(`#current-${update}`).text(changes[update])
+    })
+})
+
+socket.on('revealGameStatus', () => {
+    $("#game-status-box").css("display", "grid")
+    $("#start-menu").css("display", "none")
+})
+
+$('#start-btn').on('click', () => {
+    const gameId = sessionStorage.getItem('gameId')
+    const startTeam = sessionStorage.getItem('startTeam')
+    socket.emit('startGame', {gameId, startTeam})
+})
+
 
 
 joinGame(username, lobbyName)

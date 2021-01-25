@@ -34,7 +34,7 @@ body{
 
 /* CARDS SECTION */
 
-.card [revealed = true] {
+.card[revealed="true"] {
     opacity: 0.4;
 }
 
@@ -88,10 +88,11 @@ body{
     justify-content: center;
 }
 
-#team-info{
+#game-info{
     display: grid;
-    grid-template-columns: 2fr 1fr 2fr;
+    grid-template-columns: 1fr 1fr 1fr;
     justify-items: center;
+    
 }
 
 #red-team {
@@ -123,7 +124,6 @@ body{
     padding: .2rem;
 }
 
-
 .team-info-box span {
     align-self: center;
     font-family: 'SkyFall';
@@ -149,6 +149,32 @@ body{
     padding: .8rem;
 }
 
+.team-info-box .counter {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 1rem;
+}
+
+#game-status-box{
+    /* display: grid; */
+    display: none;
+    background-color: tan;
+    padding: 1.5rem;
+    border-radius: 10px;
+    min-width: auto;
+
+}
+
+#game-status-box .status-box-title{
+    font-weight: bold;
+}
+
+#victory-menu {
+    display: none;
+    background-color: tan;
+    padding: 1.5rem;
+    border-radius: 10px;
+    min-width: auto;
+}
 
 #clue-form {
     display: none;
@@ -156,9 +182,4 @@ body{
     border: 1px solid black;
     border-radius: 10px;
     padding: 1rem;
-}
-
-.team-info-box .counter {
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 1rem;
 }

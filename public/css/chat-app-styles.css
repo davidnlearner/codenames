@@ -22,19 +22,20 @@ label {
     display: block;
     font-size: 14px;
     margin-bottom: 8px;
-    color: #777;
+    color: rgb(58, 58, 58);
 }
 
 input {
     border: 1px solid #eeeeee;
     padding: 12px;
     outline: none;
+    margin-bottom: .5rem;
 }
 
 button {
     cursor: pointer;
     padding: 12px;
-    background: #7C5CBF;
+    background: #353438;
     border: none;
     color: white;
     font-size: 16px;
@@ -42,12 +43,12 @@ button {
 }
 
 button:hover {
-    background: #6b47b8;
+    background: #1a1a1d;
 }
 
 button:disabled {
     cursor: default;
-    background: #7c5cbf94;
+    background: #3f3e3e94;
 }
 
 /* Join Page Styles */
@@ -63,9 +64,13 @@ button:disabled {
 
 .centered-form__box {
     box-shadow: 0px 0px 17px 1px #1D1F26;
-    background: #F7F7FA;
-    padding: 24px;
+    background: tan;
+    padding: 24px; 
     width: 250px;
+    border: .3rem solid rgba(243, 230, 219, 1);
+    border-radius: .5rem;
+    font-family: 'SkyFall';
+
 }
 
 .centered-form button {
@@ -74,7 +79,7 @@ button:disabled {
 
 .centered-form input {
     margin-bottom: 16px;
-    width: 100%;
+    width: 90%;
 }
 
 /* Chat Page Layout */

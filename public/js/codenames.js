@@ -261,8 +261,8 @@ const joinTeamEvent = async (e) => {
         const response = await fetch(`/players/${playerId}`, { method: 'PATCH', headers: { "Content-Type": "application/json" }, body: JSON.stringify(changes) })
         const player = await response.json()
 
-        // Changes display to give card overlay and give clue form if they become a cluegiver
-        if (player.role === 'cluegiver') {
+        // Changes display to give card overlay and give clue form if they become a spymaster
+        if (player.role === 'spymaster') {
             const boardId = sessionStorage.getItem('boardId')
             addBoardOverlay(boardId, player.role)
             $clueForm.style.display = 'block'
@@ -284,7 +284,7 @@ $('.team-join-btn').on('click', function (e) {joinTeamEvent(e)})
 // Recieves claimed roles and adjusts user's display to show username in place of button
 socket.on('new-player-role', ({ role, team, username }) => {
     const wrapper = document.querySelector(`#${role}-${team}-wrapper`)
-    wrapper.innerHTML = `<p id='role-username'> ${username} </p>`
+    wrapper.innerHTML = `<p class='role-username card-word'> ${username} </p>`
 
 })
 
@@ -331,13 +331,13 @@ socket.on('guessingPhase', async ({ guessNumber, team }) => {
     }
 })
 
-// Unlocks clueform for next cluegiver
-socket.on('cluegiverPhase', async ({ activeTeam }) => {
+// Unlocks clueform for next spymaster
+socket.on('spymasterPhase', async ({ activeTeam }) => {
     const playerId = sessionStorage.getItem('playerId')
     const playerRaw = await fetch(`/players/${playerId}`)
     const player = await playerRaw.json()
 
-    if (player.role === 'cluegiver' && player.team === activeTeam) {
+    if (player.role === 'spymaster' && player.team === activeTeam) {
         $clueFormButton.removeAttribute('disabled')
         const message = `It is ${player.username}'s turn to give a clue.`
         socket.emit('sendMessage', { message, name: 'Admin', gameId: player.gameId })

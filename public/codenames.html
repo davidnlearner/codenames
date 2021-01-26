@@ -32,23 +32,29 @@
                 <form id='clue-form'>
                     <input name="clue" placeholder='Clue' type="text" onkeypress="return lettersOnly(event)" required>
                     <input name="guessNumber" placeholder='Guesses' type="number" min="0" max="6" required>
+                    <br>
                     <button disabled>Send</button>
                 </form>
             </div>
 
             <div id="game-info">
                 <div id="red-team" class="team-info-box">
-                    <h3 class="card-word">Red Team: <span id="red-team-counter" class="counter">5</span></h3>
-                    <span>Clue giver: </span>
-                    <div id="cluegiver-red-wrapper" class="role-wrapper"><button team='red' role='cluegiver' class="team-join-btn">Join</button></div>
-                    <span>Guesser: </span>
-                    <div id="guesser-red-wrapper" class="role-wrapper"><button team='red' role='guesser' class="team-join-btn">Join</button></div>
+                    <h3 class="card-word">Red Team: </h3>
+                    <h4 class="card-word"> Cards remaining: <span id="red-team-counter" class="counter">5</span></h4>
+
+                    <span class="status-box-title">Spymaster: </span>
+                    <div id="spymaster-red-wrapper" class="role-wrapper"><button team='red' role='spymaster'
+                            class="team-join-btn">Join</button></div>
+                    <span class="status-box-title">Guesser: </span>
+                    <div id="guesser-red-wrapper" class="role-wrapper"><button team='red' role='guesser'
+                            class="team-join-btn">Join</button></div>
                 </div>
-                <div id='start-menu'>
+                <div id='start-menu' class="status-box">
                     <button id='start-btn'>Start Game</button>
+                    <hr class="lines">
                     <button class='leave-game-btn'>Leave Game</button>
                 </div>
-                <div id="game-status-box">
+                <div id="game-status-box" class="status-box">
                     <div><span class="status-box-title">Playing:</span> <span id="current-team">team</span> (<span
                             id="current-playerName">username</span>) </div>
                     <div><span class="status-box-title">Phase:</span> <span id="current-phase">spymaster/guesser</span>
@@ -56,19 +62,24 @@
                     <div><span class="status-box-title">Clue:</span> <span id="current-clue">-</span> </div>
                     <div><span class="status-box-title">Guesses remaining:</span> <span
                             id="current-guessNumber">-</span> </div>
+                    <hr class="lines">
                     <button class='leave-game-btn'>Leave Game</button>
                 </div>
-                <div id='victory-menu'>
+                <div id='victory-menu' class="status-box">
                     <div><span class='victory-msg'>Victory to Assassins</span></div>
                     <button id='new-game-btn'>New Game?</button>
+                    <hr class="lines">
                     <button class='leave-game-btn'>Leave Game</button>
                 </div>
                 <div id="blue-team" class="team-info-box">
-                    <h3 class="card-word">Blue Team: <span id="blue-team-counter" class="counter">5</span></h3>
-                    <span>Clue giver: </span>
-                    <div id="cluegiver-blue-wrapper" class="role-wrapper"><button team='blue' role='cluegiver' class="team-join-btn">Join</button></div>
-                    <span>Guesser: </span>
-                    <div id="guesser-blue-wrapper" class="role-wrapper"><button team='blue' role='guesser' class="team-join-btn">Join</button></div>
+                    <h3 class="card-word">Blue Team </h3>
+                    <h4 class="card-word"> Cards remaining: <span id="blue-team-counter" class="counter">5</span></h4>
+                    <span class="status-box-title">Spymaster: </span>
+                    <div id="spymaster-blue-wrapper" class="role-wrapper"><button team='blue' role='spymaster'
+                            class="team-join-btn">Join</button></div>
+                    <span class="status-box-title">Guesser: </span>
+                    <div id="guesser-blue-wrapper" class="role-wrapper"><button team='blue' role='guesser'
+                            class="team-join-btn">Join</button></div>
                 </div>
 
 

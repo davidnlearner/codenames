@@ -105,7 +105,7 @@ io.on('connection', (socket) => {
         io.to(player.gameId).emit('message', generateMessage('Admin', `${player.team}'s turn is over.`))
         io.to(player.gameId).emit('updateGameStatus', { clue: '', guessNumber: '', team: opposingTeam, phase:'Spymaster' })
         callback(false)
-        io.to(player.gameId).emit('cluegiverPhase', { activeTeam: opposingTeam })
+        io.to(player.gameId).emit('spymasterPhase', { activeTeam: opposingTeam })
     })
 
     socket.on('updateActivePlayer', ({playerName, gameId}) => {
@@ -119,7 +119,7 @@ io.on('connection', (socket) => {
     socket.on('startGame', ({gameId, startTeam}) => {
         io.to(gameId).emit('revealGameStatus')
         io.to(gameId).emit('updateGameStatus', { team: startTeam, phase:'Spymaster' })
-        io.to(gameId).emit('cluegiverPhase', { activeTeam: startTeam })
+        io.to(gameId).emit('spymasterPhase', { activeTeam: startTeam })
     })
 
     socket.on('clear-board', async ({gameId}) => {

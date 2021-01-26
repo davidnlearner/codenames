@@ -85,8 +85,6 @@ io.on('connection', (socket) => {
         io.to(player.gameId).emit('message', generateMessage('Admin', `${word} belongs to the ${cardTeam} team.`))
         io.to(player.gameId).emit('card-reveal', { cardTeam, word })
 
-
-
         if (cardTeam === player.team) {
             io.to(player.gameId).emit('update-score', { cardTeam })
             if (guessNumber !== 0) {
@@ -104,22 +102,45 @@ io.on('connection', (socket) => {
             io.to(player.gameId).emit('update-score', { cardTeam })
         }
 
-
-
         io.to(player.gameId).emit('message', generateMessage('Admin', `${player.team}'s turn is over.`))
         io.to(player.gameId).emit('updateGameStatus', { clue: '', guessNumber: '', team: opposingTeam, phase:'Spymaster' })
         callback(false)
         io.to(player.gameId).emit('cluegiverPhase', { activeTeam: opposingTeam })
     })
 
-    socket.on('updateActivePlayer', ({name, gameId}) => {
-        io.to(gameId).emit('updateGameStatus', { playerName: name })
+    socket.on('updateActivePlayer', ({playerName, gameId}) => {
+        io.to(gameId).emit('updateGameStatus', { playerName })
+    })
+
+    socket.on('updateActiveTeam', ({team, gameId}) => {
+        io.to(gameId).emit('updateGameStatus', { team })
     })
 
     socket.on('startGame', ({gameId, startTeam}) => {
         io.to(gameId).emit('revealGameStatus')
         io.to(gameId).emit('updateGameStatus', { team: startTeam, phase:'Spymaster' })
         io.to(gameId).emit('cluegiverPhase', { activeTeam: startTeam })
+    })
+
+    socket.on('clear-board', async ({gameId}) => {
+
+        // Removes usernames from team boxes
+        const game = await Game.findOne({ _id: gameId })
+        while (game.playerRoles.length > 0) {
+            let player = game.playerRoles.pop()
+            io.to(gameId).emit('reset-player-role', { role: player.role, team: player.team })
+        }
+        // game.playerRoles.forEach((player) => {
+        //     io.to(gameId).emit('reset-player-role', { role: player.role, team: player.team }) 
+        // })
+        // game.playerRoles = []
+        game.save()
+
+        await Board.findOneAndDelete({ gameId })        
+    })
+
+    socket.on('send-restart', ({gameId}) => {
+        io.to(gameId).emit('new-round', {gameId})
     })
 
 

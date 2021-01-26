@@ -28,7 +28,6 @@ let guessEnabled = false
 
 // Event cards are given
 const cardEvent = async (word) => {
-    const $cards = document.querySelectorAll(".card")
     const boardId = sessionStorage.getItem('boardId')
 
     const playerId = sessionStorage.getItem('playerId')
@@ -53,7 +52,7 @@ const cardEvent = async (word) => {
 // Can be made into an import
 const generateBoard = async (boardId) => {
     clearBoard()
-    const response = await fetch(`/boards/initial/${boardId}`)
+    const response = await fetch(`/boards/wordlist/${boardId}`)
     const data = await response.json()
 
     // Saves startTeam in session storage
@@ -83,8 +82,8 @@ const generateBoard = async (boardId) => {
 // Adds team colors to cards
 // Can be made into an import
 // Might need cleanup due to limited usage
-const addBoardOverlay = async (boardId, role) => {
-    const response = await fetch(`/boards/${boardId}/${role}`)
+const addBoardOverlay = async (boardId) => {
+    const response = await fetch(`/boards/overlay/${boardId}`)
     const data = await response.json()
 
     const $boardCards = $boardContainer.querySelectorAll('.card')
@@ -102,13 +101,12 @@ const addBoardOverlay = async (boardId, role) => {
 const clearBoard = () => { $boardContainer.innerHTML = '' }
 
 
-// Creates and displays a new board (for new round)
+// Creates a new board and returns it
 // Can be made into an import
-// Not currently in use
 const newBoard = async (gameId) => {
-    const response = await fetch(`/boards`, { method: 'POST', body: JSON.stringify({ 'gameId': `${gameId}` }) })
-    const data = await response.json()
-    generateBoard(data._id)
+    const boardRaw = await fetch(`/boards`, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ gameId }) })
+    const board = await boardRaw.json()
+    return board
 }
 
 // Creates and returns a new game and board
@@ -118,9 +116,7 @@ const newGame = async (lobbyName) => {
     const gameRaw = await fetch(`/games`, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lobbyName }) })
     const game = await gameRaw.json()
 
-    // Creates a new board tied to newly created game
-    const boardRaw = await fetch(`/boards`, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ gameId: game._id }) })
-    const board = await boardRaw.json()
+    const board = await newBoard(game._id)
 
     return { game, board }
 }
@@ -137,7 +133,8 @@ const getGameData = async (lobbyName) => {
     // else gets current game board and returns the game with the board
     if (game.msg === 'no game found') {
         return newGame(lobbyName)
-    } else {
+    } 
+    else {
         const boardRaw = await fetch(`/boards/game/${game._id}`)
         const board = await boardRaw.json()
 
@@ -168,19 +165,25 @@ const joinGame = async (username, lobbyName) => {
             sessionStorage.setItem('playerId', player._id)
         }
     })
+    displaysSetup(board._id)
+}
 
+// Displays current board, starting team, and adjusts score counter
+const displaysSetup = async (boardId) => {
     // Current board Id written into session storage
-    sessionStorage.setItem('boardId', board._id)
+    sessionStorage.setItem('boardId', boardId)
+
     // Gets board and displays it to user
-    await generateBoard(board._id)
+    await generateBoard(boardId)
 
     // Start team message
     const rawStartTeam = sessionStorage.getItem('startTeam')
     const startTeam = rawStartTeam.charAt(0).toUpperCase() + rawStartTeam.slice(1)
     const message = 'The ' + startTeam + ' Team will go first.'
     socket.emit('sendJoinMessage', { message, name: 'Admin' })
+    socket.emit('updateActiveTeam', {team: startTeam})
 
-    // Set cards remaining
+    // Add 1 to cards remaining for starting team
     const $counter = document.querySelector(`#${rawStartTeam}-team-counter`)
     $counter.innerText = parseInt($counter.innerText) + 1
 }
@@ -249,7 +252,6 @@ $messageForm.addEventListener('submit', (e) => {
 // Role Assignment
 
 // Handles join team buttons, Gives user a role and a team, Adjusts display accordingly
-// Possible edit: Disable clueform for both cluegivers and create a start game condition/button
 $joinTeamButton.forEach((button) => {
     button.addEventListener('click', async (e) => {
         const role = e.target.getAttribute('role')
@@ -293,7 +295,7 @@ socket.on('new-player-role', ({ role, team, username }) => {
 
 socket.on('reset-player-role', ({ role, team }) => {
     const wrapper = document.querySelector(`#${role}-${team}-wrapper`)
-    wrapper.innerHTML = `<button team='blue' role='cluegiver' class="team-join-btn">Join</button>`
+    wrapper.innerHTML = `<button team='${team}' role='${role}' class="team-join-btn">Join</button>`
 })
 
 // Game Events
@@ -330,7 +332,7 @@ socket.on('guessingPhase', async ({ guessNumber, team }) => {
         guessEnabled = true
         const message = `It is ${player.username}'s turn to guess`
         socket.emit('sendMessage', { message, name: 'Admin', gameId: player.gameId })
-        socket.emit('updateActivePlayer', { name: player.username, gameId: player.gameId })
+        socket.emit('updateActivePlayer', { playerName: player.username, gameId: player.gameId })
     }
 })
 
@@ -345,7 +347,7 @@ socket.on('cluegiverPhase', async ({ activeTeam }) => {
         const message = `It is ${player.username}'s turn to give a clue.`
         const gameId = sessionStorage.getItem('gameId')
         socket.emit('sendMessage', { message, name: 'Admin', gameId: player.gameId })
-        socket.emit('updateActivePlayer', { name: player.username, gameId: player.gameId,  })
+        socket.emit('updateActivePlayer', { playerName: player.username, gameId: player.gameId,  })
 
     }
 })
@@ -373,6 +375,9 @@ socket.on('assassin-game-over', ({ opposingTeam }) => {
 })
 
 const teamVictory = (team) => {
+    const boardId = sessionStorage.getItem('boardId')
+    addBoardOverlay(boardId)
+
     const msg = `The ${team} team wins!`
     $('.victory-msg').text(msg)
     $('#victory-menu').css("display", "grid")
@@ -404,6 +409,31 @@ $('#start-btn').on('click', () => {
     socket.emit('startGame', {gameId, startTeam})
 })
 
+$('#new-game-btn').on('click', () => {
+    const gameId = sessionStorage.getItem('gameId')
+    // Clears player roles and deletes old board
+    socket.emit('clear-board', {gameId})
+    newBoard(gameId)
+    socket.emit('send-restart', {gameId})
+})
+
+socket.on('new-round', async ({gameId}) => {
+    
+    //Removing player roles and teams
+    const changes = { 'role': 'none', 'team': 'none' }
+    const playerId = sessionStorage.getItem('playerId')
+    const response = await fetch(`/players/${playerId}`, { method: 'PATCH', headers: { "Content-Type": "application/json" }, body: JSON.stringify(changes) })
+
+    $clueForm.style.display = 'none'
+    $('.counter').text('5')
+
+    const boardRaw = await fetch(`/boards/game/${gameId}`)
+    const board = await boardRaw.json()
+    displaysSetup(board._id)
+
+    $("#start-menu").css("display", "grid")
+    $('#victory-menu').css("display", "none")
+})
 
 
 joinGame(username, lobbyName)

@@ -12,8 +12,6 @@ const $clueForm = document.querySelector('#clue-form')
 const $clueFormInput = $clueForm.querySelectorAll('input')
 const $clueFormButton = $clueForm.querySelector('button')
 
-const $joinTeamButton = document.querySelectorAll('.team-join-btn')
-
 // Templates
 const messageTemplate = document.querySelector('#message-template').innerHTML
 
@@ -22,8 +20,6 @@ const { username, lobbyName } = Qs.parse(location.search, { ignoreQueryPrefix: t
 
 let currentGuesses = -1
 let guessEnabled = false
-
-
 
 
 // Event cards are given
@@ -252,15 +248,12 @@ $messageForm.addEventListener('submit', (e) => {
 // Role Assignment
 
 // Handles join team buttons, Gives user a role and a team, Adjusts display accordingly
-$joinTeamButton.forEach((button) => {
-    button.addEventListener('click', async (e) => {
+const joinTeamEvent = async (e) => {
         const role = e.target.getAttribute('role')
         const team = e.target.getAttribute('team')
         const startTeam = sessionStorage.getItem('startTeam')
 
-        $joinTeamButton.forEach((btn) => {
-            btn.setAttribute('disabled', 'disabled')
-        })
+        $('.team-join-btn').prop('disabled', true)
 
         // changes player info in database
         const changes = { 'role': role, 'team': team }
@@ -283,8 +276,10 @@ $joinTeamButton.forEach((button) => {
         }
 
         socket.emit('new-role', { role, team, playerId })
-    })
-})
+}
+
+$('.team-join-btn').on('click', function (e) {joinTeamEvent(e)})
+
 
 // Recieves claimed roles and adjusts user's display to show username in place of button
 socket.on('new-player-role', ({ role, team, username }) => {
@@ -345,7 +340,6 @@ socket.on('cluegiverPhase', async ({ activeTeam }) => {
     if (player.role === 'cluegiver' && player.team === activeTeam) {
         $clueFormButton.removeAttribute('disabled')
         const message = `It is ${player.username}'s turn to give a clue.`
-        const gameId = sessionStorage.getItem('gameId')
         socket.emit('sendMessage', { message, name: 'Admin', gameId: player.gameId })
         socket.emit('updateActivePlayer', { playerName: player.username, gameId: player.gameId,  })
 
@@ -420,12 +414,14 @@ $('#new-game-btn').on('click', () => {
 socket.on('new-round', async ({gameId}) => {
     
     //Removing player roles and teams
-    const changes = { 'role': 'none', 'team': 'none' }
+    const changes = { 'role': 'guesser', 'team': '' }
     const playerId = sessionStorage.getItem('playerId')
     const response = await fetch(`/players/${playerId}`, { method: 'PATCH', headers: { "Content-Type": "application/json" }, body: JSON.stringify(changes) })
 
     $clueForm.style.display = 'none'
     $('.counter').text('5')
+
+    $('.team-join-btn').on('click', function (e) {joinTeamEvent(e)})
 
     const boardRaw = await fetch(`/boards/game/${gameId}`)
     const board = await boardRaw.json()

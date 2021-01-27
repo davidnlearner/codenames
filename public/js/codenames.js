@@ -388,6 +388,8 @@ $('#new-game-btn').on('click', () => {
     socket.emit('send-restart', {gameId})
 })
 
+//$('.end-turn').on('click')
+
 socket.on('new-round', async ({gameId}) => {
     
     //Removing player roles and teams
@@ -396,7 +398,7 @@ socket.on('new-round', async ({gameId}) => {
     const response = await fetch(`/players/${playerId}`, { method: 'PATCH', headers: { "Content-Type": "application/json" }, body: JSON.stringify(changes) })
 
     $clueForm.style.display = 'none'
-    $('.counter').text('5')
+    $('.counter').text('8')
 
     $('.team-join-btn').on('click', function (e) {joinTeamEvent(e)})
 

@@ -25,7 +25,7 @@
             <div id='clue-form-box'>
                 <form id='clue-form'>
                     <input name="clue" placeholder='Clue' type="text" onkeypress="return lettersOnly(event)" required>
-                    <input name="guessNumber" placeholder='Guesses' type="number" min="0" max="6" required>
+                    <input name="guessNumber" placeholder='Guesses' type="number" min="0" max="9" required>
                     <br>
                     <button disabled>Send</button>
                 </form>
@@ -34,7 +34,7 @@
             <div id="game-info">
                 <div id="red-team" class="team-info-box">
                     <h3 class="card-word">Red Team </h3>
-                    <h4 class="card-word"> Cards remaining: <span id="red-team-counter" class="counter">5</span></h4>
+                    <h4 class="card-word"> Cards remaining: <span id="red-team-counter" class="counter">8</span></h4>
 
                     <span class="status-box-title">Spymaster: </span>
                     <div id="spymaster-red-wrapper" class="role-wrapper"><button team='red' role='spymaster'
@@ -52,6 +52,7 @@
                     <div><span id="current-playerName" class="status-box-title"></span> </div>
                     <div><span class="status-box-title">Clue:</span> <span id="current-clue" class="status-box-title">-</span> </div>
                     <div><span class="status-box-title">Guesses remaining:</span> <span id="current-guessNumber" class="status-box-title">-</span> </div>
+                    <button class='end-turn-btn'>End Turn</button>
                     <hr class="lines">
                     <button class='leave-game-btn'>Leave Game</button>
                 </div>
@@ -63,7 +64,7 @@
                 </div>
                 <div id="blue-team" class="team-info-box">
                     <h3 class="card-word">Blue Team </h3>
-                    <h4 class="card-word"> Cards remaining: <span id="blue-team-counter" class="counter">5</span></h4>
+                    <h4 class="card-word"> Cards remaining: <span id="blue-team-counter" class="counter">8</span></h4>
                     <span class="status-box-title">Spymaster: </span>
                     <div id="spymaster-blue-wrapper" class="role-wrapper"><button team='blue' role='spymaster'
                             class="team-join-btn">Join</button></div>

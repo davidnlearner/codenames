@@ -64,8 +64,9 @@ io.on('connection', (socket) => {
 
     socket.on('sendClue', async ({ clue, guessNumber, playerId }, callback) => {
         const player = await Player.findOne({ _id: playerId })
+        const text = `New clue: ${clue} ${guessNumber}`
         io.to(player.gameId).emit('guessingPhase', { guessNumber, team: player.team })
-        io.to(player.gameId).emit('message',  { text: `${clue} ${guessNumber}`, team: player.team })
+        io.to(player.gameId).emit('message',  { text, team: player.team })
         io.to(player.gameId).emit('updateGameStatusClue', {clue, guessNumber})
         callback()  
     })

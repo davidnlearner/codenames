@@ -95,4 +95,5 @@ button:disabled {
     overflow-y: scroll;
     background-color: rgb(104, 135, 141);
     height: 100%;
+    border-radius: .5rem;
 }

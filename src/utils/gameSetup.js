@@ -34,7 +34,8 @@ const getStartTeam = () => {
 
 const newOverlay = (startTeam) => {
   const overlay = []
-  const teams = ['red', 'red', 'red', 'red', 'red', 'blue', 'blue', 'blue', 'blue', 'blue', 'assassin']
+  const teams = ['red', 'red', 'red', 'red', 'red', 'red', 'red', 'red', 'blue', 'blue', 'blue', 'blue', 'blue', 'blue', 'blue', 'blue', 'assassin']
+  //for (r = 0; r < 8; r++) {}
   const civilians = 25 - (teams.length + 1)
   for (i = 0; i < civilians; i++){
     teams.push('civilain')

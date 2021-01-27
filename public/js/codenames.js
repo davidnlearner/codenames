@@ -2,10 +2,6 @@ const socket = io()
 
 // Elements
 const $boardContainer = document.querySelector("#board-container")
-
-const $messageForm = document.querySelector('#message-form')
-const $messageFormInput = $messageForm.querySelector('input')
-const $messageFormButton = $messageForm.querySelector('button')
 const $messages = document.querySelector('#messages')
 
 const $clueForm = document.querySelector('#clue-form')
@@ -53,7 +49,6 @@ const generateBoard = async (boardId) => {
 
     // Saves startTeam in session storage
     sessionStorage.setItem('startTeam', data.startTeam)
-    console.log(data.startTeam)
 
     // Adds a card for each word to html
     data.wordlist.forEach((word) => {
@@ -161,6 +156,7 @@ const joinGame = async (username, lobbyName) => {
             sessionStorage.setItem('playerId', player._id)
         }
     })
+
     displaysSetup(board._id)
 }
 
@@ -173,14 +169,13 @@ const displaysSetup = async (boardId) => {
     await generateBoard(boardId)
 
     // Start team message
-    const rawStartTeam = sessionStorage.getItem('startTeam')
-    const startTeam = rawStartTeam.charAt(0).toUpperCase() + rawStartTeam.slice(1)
-    const message = 'The ' + startTeam + ' Team will go first.'
-    socket.emit('sendJoinMessage', { message, name: 'Admin' })
-    socket.emit('updateActiveTeam', {team: startTeam})
+    const gameId = sessionStorage.getItem('gameId')
+    const startTeam = sessionStorage.getItem('startTeam')
+    const message = 'The ' + startTeam + ' team will go first.'
+    socket.emit('sendMessage', { message, team: startTeam, gameId })
 
     // Add 1 to cards remaining for starting team
-    const $counter = document.querySelector(`#${rawStartTeam}-team-counter`)
+    const $counter = document.querySelector(`#${startTeam}-team-counter`)
     $counter.innerText = parseInt($counter.innerText) + 1
 }
 
@@ -211,38 +206,9 @@ const autoscroll = () => {
 }
 
 socket.on('message', (message) => {
-    const username = message.username + ":"
-    const html = Mustache.render(messageTemplate, {
-        message: message.text,
-        // createdAt: moment(message.createdAt).format('hh:mm a'),
-        username
-    })
+    const html = Mustache.render(messageTemplate, { message: message.text, team: message.team })
     $messages.insertAdjacentHTML('beforeend', html)
     autoscroll()
-})
-
-$messageForm.addEventListener('submit', (e) => {
-    e.preventDefault()
-    // disable form
-    $messageFormButton.setAttribute('disabled', 'disabled')
-
-    const message = e.target.elements.message.value
-    const playerName = sessionStorage.getItem('username')
-    const gameId = sessionStorage.getItem('gameId')
-    console.log(playerName)
-
-    socket.emit('sendMessage', { message, name: playerName, gameId }, (error) => {
-        // enable form
-        $messageFormButton.removeAttribute('disabled')
-        $messageFormInput.value = ''
-        $messageFormInput.focus()
-
-        if (error) {
-            return console.log(error)
-        }
-
-        console.log('Message delivered!')
-    })
 })
 
 // Role Assignment
@@ -267,10 +233,7 @@ const joinTeamEvent = async (e) => {
             addBoardOverlay(boardId, player.role)
             $clueForm.style.display = 'block'
             if (player.team === startTeam) {
-                //$clueFormButton.removeAttribute('disabled')
-                const message = `It is ${player.username}'s turn to give a clue.`
-                socket.emit('sendMessage', { message, name: 'Admin', gameId: player.gameId })
-                socket.emit('updateActivePlayer', { name: player.username, gameId: player.gameId })
+                socket.emit('updateActivePlayer', { playerName: player.username, team: player.team, role: player.role, gameId: player.gameId })
             }
 
         }
@@ -289,8 +252,10 @@ socket.on('new-player-role', ({ role, team, username }) => {
 })
 
 socket.on('reset-player-role', ({ role, team }) => {
+    if (team !== 'civilian') {
     const wrapper = document.querySelector(`#${role}-${team}-wrapper`)
     wrapper.innerHTML = `<button team='${team}' role='${role}' class="team-join-btn">Join</button>`
+    }
 })
 
 // Game Events
@@ -326,8 +291,8 @@ socket.on('guessingPhase', async ({ guessNumber, team }) => {
         currentGuesses = guessNumber
         guessEnabled = true
         const message = `It is ${player.username}'s turn to guess`
-        socket.emit('sendMessage', { message, name: 'Admin', gameId: player.gameId })
-        socket.emit('updateActivePlayer', { playerName: player.username, gameId: player.gameId })
+        socket.emit('sendMessage', { message, team: player.team, gameId: player.gameId })
+        socket.emit('updateActivePlayer', { playerName: player.username, team: player.team, role: player.role, gameId: player.gameId })
     }
 })
 
@@ -340,8 +305,8 @@ socket.on('spymasterPhase', async ({ activeTeam }) => {
     if (player.role === 'spymaster' && player.team === activeTeam) {
         $clueFormButton.removeAttribute('disabled')
         const message = `It is ${player.username}'s turn to give a clue.`
-        socket.emit('sendMessage', { message, name: 'Admin', gameId: player.gameId })
-        socket.emit('updateActivePlayer', { playerName: player.username, gameId: player.gameId,  })
+        socket.emit('sendMessage', { message, team: player.team, gameId: player.gameId })
+        socket.emit('updateActivePlayer', { playerName: player.username, team: player.team, role: player.role, gameId: player.gameId })
 
     }
 })
@@ -386,10 +351,22 @@ $('.leave-game-btn').on('click', () => {
 
 
 // Changes text in game status box
-socket.on('updateGameStatus', (changes) => {
+socket.on('updateGameStatusClue', (changes) => {
     Object.keys(changes).forEach((update) => {
         $(`#current-${update}`).text(changes[update])
     })
+})
+
+socket.on('updateGameStatusPlayer', ({playerName, team, role}) => {
+        let message = ''
+        if (role === 'spymaster'){
+            message = `It's ${playerName}'s turn to send a clue.`
+        } 
+        else {
+            message = `It's ${playerName}'s turn to guess.`
+        }
+        $(`#current-playerName`).text(message)
+        $(`#current-playerName`).css('background-color', `var(--${team}-team-color`)
 })
 
 socket.on('revealGameStatus', () => {
@@ -414,7 +391,7 @@ $('#new-game-btn').on('click', () => {
 socket.on('new-round', async ({gameId}) => {
     
     //Removing player roles and teams
-    const changes = { 'role': 'guesser', 'team': '' }
+    const changes = { 'role': 'guesser', 'team': 'civilian' }
     const playerId = sessionStorage.getItem('playerId')
     const response = await fetch(`/players/${playerId}`, { method: 'PATCH', headers: { "Content-Type": "application/json" }, body: JSON.stringify(changes) })
 

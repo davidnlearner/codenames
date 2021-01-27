@@ -175,10 +175,18 @@ body{
 
 #game-status-box{
     display: none;
+    grid-row-gap: .5rem;
+}
+
+#current-playerName {
+    padding: .5rem;
+    border-radius: .2rem;
 }
 
 .status-box-title{
     font-weight: bold;
+    letter-spacing: .1rem;
+    color: white;
 }
 
 #victory-menu {
@@ -201,4 +209,38 @@ body{
     width: 90%;
     border-style: none;
     border-bottom: 1px solid black;
+}
+
+
+/* Message styles */
+
+.message {
+    margin-bottom: .2rem;
+    padding: .5rem;
+    border-radius: .2rem;
+    font-weight: bold;
+}
+
+.message p {
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
+.message__meta {
+    color: #777;
+    font-size: 14px;
+}
+
+.message.red-team {
+    background-color: var(--red-team-color);
+    color: white;
+}
+
+.message.blue-team {
+    background-color: var(--blue-team-color);
+    color: white;
+}
+
+.message.civilian-team {
+    background-color: tan;
 }

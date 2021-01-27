@@ -17,12 +17,6 @@
                         <p id="textbox1"></p>
                     </span>
                 </div>
-                <div class="compose">
-                    <form id='message-form'>
-                        <input name="message" placeholder='Type here' type="text">
-                        <button>Send</button>
-                    </form>
-                </div>
             </div>
 
             <div id="board-container">
@@ -39,7 +33,7 @@
 
             <div id="game-info">
                 <div id="red-team" class="team-info-box">
-                    <h3 class="card-word">Red Team: </h3>
+                    <h3 class="card-word">Red Team </h3>
                     <h4 class="card-word"> Cards remaining: <span id="red-team-counter" class="counter">5</span></h4>
 
                     <span class="status-box-title">Spymaster: </span>
@@ -55,10 +49,7 @@
                     <button class='leave-game-btn'>Leave Game</button>
                 </div>
                 <div id="game-status-box" class="status-box">
-                    <div><span class="status-box-title">Playing:</span> <span id="current-team">team</span> (<span
-                            id="current-playerName">username</span>) </div>
-                    <div><span class="status-box-title">Phase:</span> <span id="current-phase">spymaster/guesser</span>
-                    </div>
+                    <div><span id="current-playerName" class="status-box-title"></span> </div>
                     <div><span class="status-box-title">Clue:</span> <span id="current-clue">-</span> </div>
                     <div><span class="status-box-title">Guesses remaining:</span> <span
                             id="current-guessNumber">-</span> </div>
@@ -82,35 +73,18 @@
                             class="team-join-btn">Join</button></div>
                 </div>
 
-
             </div>
 
         </div>
 
 
         <script id="message-template" type="text/html">
-            <div class="message">
-                <p> 
-                    <span class="message__name">{{username}}</span>
-                    <!-- <span class="message__name">{{createdAt}}</span>  -->
-                </p>
+            <div class="message {{team}}-team">
                 <p>{{message}}</p>
             </div>
         </script>
 
-        <script id="sidebar-template" type="text/html">
-            <h2 class="room-title">{{room}}</h2>
-            <h3 class="list-title">Users</h3>
-            <ul class="users">
-                {{#users}}
-                    <li>{{username}}</li>
-                {{/users}}
-            </ul>
-            
-        </script>
-
-
-
+        
         <script src="https://code.jquery.com/jquery-3.5.1.min.js"
             integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/3.0.1/mustache.min.js"></script>

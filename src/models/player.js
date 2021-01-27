@@ -11,7 +11,7 @@ const playerSchema = new mongoose.Schema({
     },
     team: {
         type: String,
-        default: ''
+        default: 'civilian'
     },
     role: {
         type: String,

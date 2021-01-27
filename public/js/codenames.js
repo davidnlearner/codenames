@@ -30,9 +30,9 @@ const cardEvent = async (word) => {
     socket.emit('handleGuess', { word, guessNumber: currentGuesses, boardId, player }, (yourTurn) => {
         // Ends turn if out of guesses or bad guess
         if (yourTurn === false) {
-            // end turn somehow?
             currentGuesses = -1
             socket.emit('cluePhase', { team })
+            $('.end-turn-btn').prop('disabled', true)
         } else {
             currentGuesses -= 1
             guessEnabled = true
@@ -290,6 +290,7 @@ socket.on('guessingPhase', async ({ guessNumber, team }) => {
     if (player.role === 'guesser' && player.team === team) {
         currentGuesses = guessNumber
         guessEnabled = true
+        $('.end-turn-btn').prop('disabled', false)
         const message = `It is ${player.username}'s turn to guess`
         socket.emit('sendMessage', { message, team: player.team, gameId: player.gameId })
         socket.emit('updateActivePlayer', { playerName: player.username, team: player.team, role: player.role, gameId: player.gameId })
@@ -388,7 +389,20 @@ $('#new-game-btn').on('click', () => {
     socket.emit('send-restart', {gameId})
 })
 
-//$('.end-turn').on('click')
+$('.end-turn-btn').on('click', async() => {
+    const playerId = sessionStorage.getItem('playerId')
+    const playerRaw = await fetch(`/players/${playerId}`)
+    const player = await playerRaw.json()
+
+    currentGuesses = -1
+    guessEnabled = false
+    activeTeam = player.team === 'red' ? 'blue' : 'red'
+
+    socket.emit('sendMessage',{ text: `${player.team}'s turn is over.`, team: player.team, gameId: player.gameId})
+    socket.emit('updateClue', { gameId: player.gameId })
+    socket.emit('end-turn', { activeTeam, gameId: player.gameId })
+    $('.end-turn-btn').prop('disabled', true)
+})
 
 socket.on('new-round', async ({gameId}) => {
     

@@ -108,6 +108,14 @@ io.on('connection', (socket) => {
         io.to(gameId).emit('updateGameStatusPlayer', { playerName, team, role })
     })
 
+    socket.on('updateClue', ({gameId}) => {
+        io.to(gameId).emit('updateGameStatusClue', { clue: '', guessNumber: '' })
+    })
+
+    socket.on('end-turn', ({activeTeam, gameId}) => {
+        io.to(gameId).emit('spymasterPhase', { activeTeam })
+    })
+
     socket.on('startGame', ({gameId, startTeam}) => {
         io.to(gameId).emit('revealGameStatus')
         io.to(gameId).emit('spymasterPhase', { activeTeam: startTeam })

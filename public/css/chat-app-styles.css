@@ -1,11 +1,11 @@
 /* General Styles */
 
 html {
-    font-size: 16px;
+    font-size: 1rem;
 }
 
 input {
-    font-size: 14px;
+    font-size: 1rem;
 }
 
 body {
@@ -23,18 +23,18 @@ label {
 
 input {
     border: 1px solid #eeeeee;
-    padding: 12px;
+    padding: 1rem;
     outline: none;
     margin-bottom: .5rem;
 }
 
 button {
     cursor: pointer;
-    padding: 12px;
+    padding: 1rem;
     background: #353438;
     border: none;
     color: white;
-    font-size: 16px;
+    font-size: 1rem;
     transition: background .3s ease;
 }
 

@@ -38,7 +38,7 @@ const newOverlay = (startTeam) => {
   //for (r = 0; r < 8; r++) {}
   const civilians = 25 - (teams.length + 1)
   for (i = 0; i < civilians; i++){
-    teams.push('civilain')
+    teams.push('civilian')
   }
 
   if (startTeam === 'red'){

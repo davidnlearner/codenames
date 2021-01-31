@@ -48,6 +48,7 @@ io.on('connection', (socket) => {
     })
 
     socket.on('sendMessage', ({ message, team, gameId }) => {
+        console.log({ message, team, gameId })
         io.to(gameId).emit('message', { text: message, team })
     })
 
@@ -66,8 +67,8 @@ io.on('connection', (socket) => {
         const player = await Player.findOne({ _id: playerId })
         const text = `New clue: ${clue} ${guessNumber}`
         io.to(player.gameId).emit('guessingPhase', { guessNumber, team: player.team })
-        io.to(player.gameId).emit('message',  { text, team: player.team })
-        io.to(player.gameId).emit('updateGameStatusClue', {clue, guessNumber})
+        io.to(player.gameId).emit('message',  { text, team: player.team, type: 'clue' })
+        io.to(player.gameId).emit('updateGameStatusClue', {clue, guessNumber: (parseInt(guessNumber) + 1) })
         callback()  
     })
 
@@ -99,7 +100,7 @@ io.on('connection', (socket) => {
         }
 
         io.to(player.gameId).emit('message',{ text: `${player.team}'s turn is over.`, team: player.team})
-        io.to(player.gameId).emit('updateGameStatusClue', { clue: '', guessNumber: '' })
+        io.to(player.gameId).emit('updateGameStatusClue', { clue: ' - ', guessNumber: ' - ' })
         callback(false)
         io.to(player.gameId).emit('spymasterPhase', { activeTeam: opposingTeam })
     })

@@ -172,6 +172,7 @@ body{
     border-radius: 10px;
     min-width: 70%;
     align-content: center;
+    height: 15rem;
 }
 
 #game-status-box{
@@ -229,7 +230,6 @@ body{
 
 .message__meta {
     color: #777;
-    font-size: 14px;
 }
 
 .message.red-team {
@@ -244,4 +244,11 @@ body{
 
 .message.civilian-team {
     background-color: tan;
+}
+
+.message.clue {
+    font-weight: bolder;
+    font-size: 1.5rem;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
 }

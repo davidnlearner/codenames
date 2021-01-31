@@ -18,28 +18,6 @@ let currentGuesses = -1
 let guessEnabled = false
 
 
-// Event cards are given
-const cardEvent = async (word) => {
-    const boardId = sessionStorage.getItem('boardId')
-
-    const playerId = sessionStorage.getItem('playerId')
-    const playerRaw = await fetch(`/players/${playerId}`)
-    const player = await playerRaw.json()
-
-    // Reveals card team to all players and checks if card belongs to user's team 
-    socket.emit('handleGuess', { word, guessNumber: currentGuesses, boardId, player }, (yourTurn) => {
-        // Ends turn if out of guesses or bad guess
-        if (yourTurn === false) {
-            currentGuesses = -1
-            socket.emit('cluePhase', { team })
-            $('.end-turn-btn').prop('disabled', true)
-        } else {
-            currentGuesses -= 1
-            guessEnabled = true
-        }
-    })
-}
-
 // Calls current board from database and displays
 // Can be made into an import
 const generateBoard = async (boardId) => {
@@ -168,13 +146,8 @@ const displaysSetup = async (boardId) => {
     // Gets board and displays it to user
     await generateBoard(boardId)
 
-    // Start team message
-    const gameId = sessionStorage.getItem('gameId')
-    const startTeam = sessionStorage.getItem('startTeam')
-    const message = 'The ' + startTeam + ' team will go first.'
-    socket.emit('sendMessage', { message, team: startTeam, gameId })
-
     // Add 1 to cards remaining for starting team
+    const startTeam = sessionStorage.getItem('startTeam')
     const $counter = document.querySelector(`#${startTeam}-team-counter`)
     $counter.innerText = parseInt($counter.innerText) + 1
 }
@@ -205,11 +178,12 @@ const autoscroll = () => {
     }
 }
 
-socket.on('message', (message) => {
-    const html = Mustache.render(messageTemplate, { message: message.text, team: message.team })
+socket.on('message', ({ text, team, type = ''}) => {
+    const html = Mustache.render(messageTemplate, { text, team, type})
     $messages.insertAdjacentHTML('beforeend', html)
     autoscroll()
 })
+
 
 // Role Assignment
 
@@ -251,14 +225,44 @@ socket.on('new-player-role', ({ role, team, username }) => {
 
 })
 
-socket.on('reset-player-role', ({ role, team }) => {
+socket.on('reset-player-role', async ({ role, team }) => {
     if (team !== 'civilian') {
-    const wrapper = document.querySelector(`#${role}-${team}-wrapper`)
-    wrapper.innerHTML = `<button team='${team}' role='${role}' class="team-join-btn">Join</button>`
+        $(`#${role}-${team}-wrapper`).innerHTML = `<button team='${team}' role='${role}' class="team-join-btn">Join</button>`
     }
+
+    const playerId = sessionStorage.getItem('playerId')
+    const playerRaw = await fetch(`/players/${playerId}`)
+    const player = await playerRaw.json()
+
+    if(player.team !== '' ){
+        $(`#${role}-${team}-wrapper`).prop('disabled', true)
+    }
+
 })
 
 // Game Events
+
+// Event cards are given
+const cardEvent = async (word) => {
+    const boardId = sessionStorage.getItem('boardId')
+
+    const playerId = sessionStorage.getItem('playerId')
+    const playerRaw = await fetch(`/players/${playerId}`)
+    const player = await playerRaw.json()
+
+    // Reveals card team to all players and checks if card belongs to user's team 
+    socket.emit('handleGuess', { word, guessNumber: currentGuesses, boardId, player }, (yourTurn) => {
+        // Ends turn if out of guesses or bad guess
+        if (yourTurn === false) {
+            currentGuesses = -1
+            socket.emit('cluePhase', { team })
+            $('.end-turn-btn').prop('disabled', true)
+        } else {
+            currentGuesses -= 1
+            guessEnabled = true
+        }
+    })
+}
 
 // Sends clue to other players through chat message, changes game state to guessing phase
 $clueForm.addEventListener('submit', (e) => {
@@ -319,6 +323,7 @@ socket.on('card-reveal', ({ cardTeam, word }) => {
     card.setAttribute(`revealed`, 'true')
 })
 
+
 // Updates cards remaining in teambox on card reveal
 socket.on('update-score', ({ cardTeam }) => {
     const $counter = document.querySelector(`#${cardTeam}-team-counter`)
@@ -352,10 +357,11 @@ $('.leave-game-btn').on('click', () => {
 
 
 // Changes text in game status box
-socket.on('updateGameStatusClue', (changes) => {
-    Object.keys(changes).forEach((update) => {
-        $(`#current-${update}`).text(changes[update])
-    })
+socket.on('updateGameStatusClue', ({guessNumber, clue=''}) => {
+    $(`#current-guessNumber`).text(guessNumber)
+    if (clue !== ''){
+        $(`#current-clue`).text(clue)
+    }
 })
 
 socket.on('updateGameStatusPlayer', ({playerName, team, role}) => {
@@ -398,7 +404,7 @@ $('.end-turn-btn').on('click', async() => {
     guessEnabled = false
     activeTeam = player.team === 'red' ? 'blue' : 'red'
 
-    socket.emit('sendMessage',{ text: `${player.team}'s turn is over.`, team: player.team, gameId: player.gameId})
+    socket.emit('sendMessage',{ message: `${player.team}'s turn is over.`, team: player.team, gameId: player.gameId})
     socket.emit('updateClue', { gameId: player.gameId })
     socket.emit('end-turn', { activeTeam, gameId: player.gameId })
     $('.end-turn-btn').prop('disabled', true)
@@ -419,6 +425,8 @@ socket.on('new-round', async ({gameId}) => {
     const boardRaw = await fetch(`/boards/game/${gameId}`)
     const board = await boardRaw.json()
     displaysSetup(board._id)
+
+    $messages.innerHTML = ''
 
     $("#start-menu").css("display", "grid")
     $('#victory-menu').css("display", "none")

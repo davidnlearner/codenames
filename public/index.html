@@ -13,17 +13,19 @@
         <div class="centered-form">
             <div class="centered-form__box">
                 <h1>Codenames</h1>
-                <form action="/codenames.html">
+                <form action="/codenames.html" autocomplete="off">
                     <label>Display name:</label>
-                    <input type="text" name="username" placeholder="Enter username" required>
+                    <input type="text" name="username" placeholder="Enter username" onkeypress="return lettersOnly(event)" required>
                     <br><br>
                     <label>Game Name</label>
-                    <input type="text" name="lobbyName" placeholder="Game name" required>
+                    <input type="text" name="lobbyName" placeholder="Game name" onkeypress="return lettersOnly(event)" required>
                     <br><br>
                     <button id="join-btn">Create/Join a Game</button>
                 </form>
             </div>
         </div>
+
+        <script src="js/utils.js"></script>
     </body>
 
 </html>

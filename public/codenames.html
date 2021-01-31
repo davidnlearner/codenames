@@ -23,9 +23,9 @@
             </div>
 
             <div id='clue-form-box'>
-                <form id='clue-form'>
-                    <input name="clue" placeholder='Clue' type="text" onkeypress="return lettersOnly(event)" required>
-                    <input name="guessNumber" placeholder='Guesses' type="number" min="0" max="9" required>
+                <form id='clue-form' autocomplete="off">
+                    <input name="clue" placeholder='Clue' type="text" onkeypress="return lettersOnlyCaps(event)" required>
+                    <input name="guessNumber" placeholder='Guesses' type="number" min="0" max="9" onkeypress="return numbersOnly(event)" required>
                     <br>
                     <button disabled>Send</button>
                 </form>
@@ -52,7 +52,7 @@
                     <div><span id="current-playerName" class="status-box-title"></span> </div>
                     <div><span class="status-box-title">Clue:</span> <span id="current-clue" class="status-box-title">-</span> </div>
                     <div><span class="status-box-title">Guesses remaining:</span> <span id="current-guessNumber" class="status-box-title">-</span> </div>
-                    <button class='end-turn-btn'>End Turn</button>
+                    <button class='end-turn-btn' disabled='true'>End Turn</button>
                     <hr class="lines">
                     <button class='leave-game-btn'>Leave Game</button>
                 </div>
@@ -79,8 +79,8 @@
 
 
         <script id="message-template" type="text/html">
-            <div class="message {{team}}-team">
-                <p>{{message}}</p>
+            <div class="message {{team}}-team {{type}}">
+                <p>{{text}}</p>
             </div>
         </script>
 

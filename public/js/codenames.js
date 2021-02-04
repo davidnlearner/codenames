@@ -1,5 +1,7 @@
 const socket = io()
 
+const clickSound = new Audio("/sounds/clickSound.wav")
+
 // Elements
 const $boardContainer = document.querySelector("#board-container")
 const $messages = document.querySelector('#messages')
@@ -251,7 +253,7 @@ const cardEvent = async (word) => {
     const player = await playerRaw.json()
 
     // Reveals card team to all players and checks if card belongs to user's team 
-    socket.emit('handleGuess', { word, guessNumber: currentGuesses, boardId, player }, (yourTurn) => {
+    socket.emit('handleGuess', { word, guessNumber: currentGuesses, boardId, player }, ({yourTurn, team}) => {
         // Ends turn if out of guesses or bad guess
         if (yourTurn === false) {
             currentGuesses = -1
@@ -290,6 +292,8 @@ socket.on('guessingPhase', async ({ guessNumber, team }) => {
     const playerRaw = await fetch(`/players/${playerId}`)
     const player = await playerRaw.json()
 
+    clickSound.play();
+
     // Checks if it's this user's turn
     if (player.role === 'guesser' && player.team === team) {
         currentGuesses = guessNumber
@@ -306,6 +310,8 @@ socket.on('spymasterPhase', async ({ activeTeam }) => {
     const playerId = sessionStorage.getItem('playerId')
     const playerRaw = await fetch(`/players/${playerId}`)
     const player = await playerRaw.json()
+
+    clickSound.play();
 
     if (player.role === 'spymaster' && player.team === activeTeam) {
         $clueFormButton.removeAttribute('disabled')
@@ -342,9 +348,12 @@ socket.on('assassin-game-over', ({ opposingTeam }) => {
 const teamVictory = (team) => {
     const boardId = sessionStorage.getItem('boardId')
     addBoardOverlay(boardId)
-
+   
     const msg = `The ${team} team wins!`
-    $('.victory-msg').text(msg)
+    $('#victory-display')
+        .text(msg)
+        .css("display", "block")
+
     $('#victory-menu').css("display", "grid")
     $("#game-status-box").css("display", "none")
 }

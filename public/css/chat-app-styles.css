@@ -36,6 +36,8 @@ button {
     color: white;
     font-size: 1rem;
     transition: background .3s ease;
+    max-width: 100%;
+    width: 100%;
 }
 
 button:hover {
@@ -66,7 +68,7 @@ button:disabled {
     box-shadow: 0px 0px 17px 1px #1D1F26;
     background: tan;
     padding: 2rem; 
-    width: 250px;
+    width: 275px;
     border: .5rem solid rgba(243, 230, 219, 1);
     border-radius: .5rem;
     font-family: 'SkyFall';
@@ -74,6 +76,7 @@ button:disabled {
 }
 
 .centered-form button {
+    max-width: 100%;
     width: 100%;
 }
 

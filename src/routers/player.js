@@ -23,9 +23,9 @@ router.post('/players', async (req, res) => {
 })
 
 router.get('/players', async (req, res) => {
-    const player = await Player.findOne({_id: req.body._id})
+    const players = await Player.find()
     try {
-        res.send(player)
+        res.send(players)
     } catch (e) {
         res.status(500).send(e)
     }

@@ -48,7 +48,6 @@ io.on('connection', (socket) => {
     })
 
     socket.on('sendMessage', ({ message, team, gameId }) => {
-        console.log({ message, team, gameId })
         io.to(gameId).emit('message', { text: message, team })
     })
 
@@ -88,12 +87,12 @@ io.on('connection', (socket) => {
                 let guessWord = guessNumber===1 ? 'guess' : 'guesses'
                 io.to(player.gameId).emit('message', { text: `The ${player.team} team has ${guessNumber} ${guessWord} left.`, team: player.team })
                 io.to(player.gameId).emit('updateGameStatusClue', { guessNumber })
-                return callback(true)
+                return callback({yourTurn:true, team: player.team})
             }
         } 
         else if (cardTeam === 'assassin') {
             io.to(player.gameId).emit('assassin-game-over', { opposingTeam })
-            return callback(false)
+            return callback({yourTurn:false, team: opposingTeam})
         } 
         else if (cardTeam === opposingTeam) {
             io.to(player.gameId).emit('update-score', { cardTeam })
@@ -101,7 +100,7 @@ io.on('connection', (socket) => {
 
         io.to(player.gameId).emit('message',{ text: `${player.team}'s turn is over.`, team: player.team})
         io.to(player.gameId).emit('updateGameStatusClue', { clue: ' - ', guessNumber: ' - ' })
-        callback(false)
+        callback({yourTurn:false, team: opposingTeam})
         io.to(player.gameId).emit('spymasterPhase', { activeTeam: opposingTeam })
     })
 

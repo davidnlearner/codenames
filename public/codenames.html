@@ -13,9 +13,6 @@
         <div class="wrapper">
             <div class="chat__main">
                 <div id="messages" class="chat__messages">
-                    <span>
-                        <p id="textbox1"></p>
-                    </span>
                 </div>
             </div>
 
@@ -85,6 +82,24 @@
         <script id="message-template" type="text/html">
             <div class="message {{team}}-team {{type}}">
                 <p>{{text}}</p>
+            </div>
+        </script>
+
+        <script id="new-role-message-template" type="text/html">
+            <div class="message {{playerTeam}}-team">
+                <p><span class="message-text {{playerTeam}}-team">{{playerName}}</span> has become a <span class="message-text {{playerTeam}}-team">{{role}}</span></p>
+            </div>
+        </script>
+
+        <script id="clue-message-template" type="text/html">
+            <div class="message {{playerTeam}}-team">
+                <p><span class="message-text {{playerTeam}}-team">{{playerName}}</span> gives clue: <span class="message-text clue">{{clue}}</span></p>
+            </div>
+        </script>
+
+        <script id="guess-message-template" type="text/html">
+            <div class="message {{playerTeam}}-team">
+                <p><span class="message-text {{playerTeam}}-team">{{playerName}}</span> taps <span class="message-text {{cardTeam}}-team">{{cardWord}}</span></p>
             </div>
         </script>
 

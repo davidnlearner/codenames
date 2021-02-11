@@ -228,35 +228,33 @@ body{
     margin-bottom: .2rem;
     padding: .5rem;
     border-radius: .2rem;
-    font-weight: bold;
 }
 
 .message p {
     margin-top: 0px;
     margin-bottom: 0px;
+    color: black;
 }
 
-.message__meta {
-    color: #777;
+.message span {
+    font-weight: bold;
+    text-transform: capitalize;
 }
 
 .message.red-team {
-    background-color: var(--red-team-color);
-    color: white;
+    background-color: rgba(214, 13, 13, 0.25);
 }
 
 .message.blue-team {
-    background-color: var(--blue-team-color);
-    color: white;
+    background-color: rgba(14, 28, 231, 0.25);
 }
 
 .message.civilian-team {
-    background-color: tan;
+    background-color: rgb(210, 180, 140, 0.5);
 }
 
 .message.assassin-team {
-    background-color: var(--assassin-color);
-    color: white;
+    background-color:  rgba(62, 62, 63, 0.5);
 }
 
 .message.clue {
@@ -265,6 +263,21 @@ body{
     border: 3px solid black;
 }
 
+.message-text.red-team {
+    color: rgba(165, 11, 11, 0.7);
+}
+
+.message-text.blue-team {
+    color: rgba(13, 25, 189, 0.7);
+}
+
+.message-text.clue {
+    background-color: white;
+    border: 2px solid black;
+    border-radius: 3px;
+    color: black;
+    padding: .1rem .3rem;
+}
 
 #victory-display{
     display: none;

@@ -59,14 +59,18 @@ io.on('connection', (socket) => {
         game.save()
 
         io.to(player.gameId).emit('new-player-role', { role, team, username: player.username })
-        io.to(player.gameId).emit('message',  { text: `${player.username} has become a ${role} for the ${team} team!`, team })
+        
+        io.to(player.gameId).emit('roleMessage',  { playerName: player.username, playerTeam: team, role })
+        //io.to(player.gameId).emit('message',  { text: `${player.username} has become a ${role} for the ${team} team!`, team })
     })
 
     socket.on('sendClue', async ({ clue, guessNumber, playerId }, callback) => {
         const player = await Player.findOne({ _id: playerId })
-        const text = `New clue: ${clue} ${guessNumber}`
+        //const text = `New clue: ${clue} ${guessNumber}`
+        const clueText = `${clue} ${guessNumber}`
         io.to(player.gameId).emit('guessingPhase', { guessNumber, team: player.team })
-        io.to(player.gameId).emit('message',  { text, team: player.team, type: 'clue' })
+        //io.to(player.gameId).emit('message',  { text, team: player.team, type: 'clue' })
+        io.to(player.gameId).emit('clueMessage',  { playerName: player.username , playerTeam: player.team, clue: clueText })
         io.to(player.gameId).emit('updateGameStatusClue', {clue, guessNumber: (parseInt(guessNumber) + 1) })
         callback()  
     })
@@ -77,15 +81,17 @@ io.on('connection', (socket) => {
         const cardTeam = board.overlay[index]
         const opposingTeam = player.team === 'red' ? 'blue' : 'red'
 
-        io.to(player.gameId).emit('message',  { text: `${player.username} guessed ${word}`, team: player.team })
-        io.to(player.gameId).emit('message', { text: `${word} belongs to the ${cardTeam} team.`, team: cardTeam })
+        // io.to(player.gameId).emit('message',  { text: `${player.username} guessed ${word}`, team: player.team })
+        // io.to(player.gameId).emit('message', { text: `${word} belongs to the ${cardTeam} team.`, team: cardTeam })
+
+        io.to(player.gameId).emit('guessMessage', { playerName: player.username, playerTeam: player.team, cardWord: word.toUpperCase(), cardTeam })
         io.to(player.gameId).emit('card-reveal', { cardTeam, word })
 
         if (cardTeam === player.team) {
             io.to(player.gameId).emit('update-score', { cardTeam })
             if (guessNumber !== 0) {
-                let guessWord = guessNumber===1 ? 'guess' : 'guesses'
-                io.to(player.gameId).emit('message', { text: `The ${player.team} team has ${guessNumber} ${guessWord} left.`, team: player.team })
+            //     let guessWord = guessNumber===1 ? 'guess' : 'guesses'
+            //     io.to(player.gameId).emit('message', { text: `The ${player.team} team has ${guessNumber} ${guessWord} left.`, team: player.team })
                 io.to(player.gameId).emit('updateGameStatusClue', { guessNumber })
                 return callback({yourTurn:true, team: player.team})
             }
@@ -141,7 +147,6 @@ io.on('connection', (socket) => {
     socket.on('send-restart', ({gameId}) => {
         io.to(gameId).emit('new-round', {gameId})
     })
-
 
 
     socket.on('disconnect', async () => {

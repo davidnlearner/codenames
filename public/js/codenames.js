@@ -12,6 +12,10 @@ const $clueFormButton = $clueForm.querySelector('button')
 
 // Templates
 const messageTemplate = document.querySelector('#message-template').innerHTML
+const guessMessageTemplate = document.querySelector('#guess-message-template').innerHTML
+const clueMessageTemplate = document.querySelector('#clue-message-template').innerHTML
+const roleMessageTemplate = document.querySelector('#new-role-message-template').innerHTML
+
 
 // Options
 const { username, lobbyName } = Qs.parse(location.search, { ignoreQueryPrefix: true })
@@ -157,35 +161,29 @@ const displaysSetup = async (boardId) => {
 
 // Chat App functions
 
-const autoscroll = () => {
-    // New message element
-    const $newMessage = $messages.lastElementChild
-
-    // Height of new message
-    const newMessageStyles = getComputedStyle($newMessage)
-    const newMessageMargin = parseInt(newMessageStyles.marginBottom)
-    const newMessageHeight = $newMessage.offsetHeight + newMessageMargin
-
-    // Visible height
-    const visibleHeight = $messages.offsetHeight
-
-    // Height of messages container
-    const containerHeight = $messages.scrollHeight
-
-    // How far have I scrolled?
-    const scrollOffset = $messages.scrollTop + visibleHeight
-
-    if (containerHeight - newMessageHeight <= scrollOffset) {
-        $messages.scrollTop = $messages.scrollHeight
-    }
-}
-
 socket.on('message', ({ text, team, type = ''}) => {
     const html = Mustache.render(messageTemplate, { text, team, type})
     $messages.insertAdjacentHTML('beforeend', html)
-    autoscroll()
+    $('#messages').animate({scrollTop: $('.message').last().offset.top}, 200)
 })
 
+socket.on('roleMessage', ({ playerName, playerTeam, role }) => {
+    const html = Mustache.render(roleMessageTemplate, { playerName, playerTeam, role })
+    $messages.insertAdjacentHTML('beforeend', html)
+    $('#messages').animate({scrollTop: $('.message').last().offset.top}, 200)
+})
+
+socket.on('clueMessage', ({ playerName, playerTeam, clue }) => {
+    const html = Mustache.render(clueMessageTemplate, { playerName, playerTeam, clue })
+    $messages.insertAdjacentHTML('beforeend', html)
+    $('#messages').animate({scrollTop: $('.message').last().offset.top}, 200)
+})
+
+socket.on('guessMessage', ({ playerName, playerTeam, cardWord, cardTeam }) => {
+    const html = Mustache.render(guessMessageTemplate, { playerName, playerTeam, cardWord, cardTeam })
+    $messages.insertAdjacentHTML('beforeend', html)
+    $('#messages').animate({scrollTop: $('.message').last().offset.top}, 200)
+})
 
 // Role Assignment
 
@@ -299,8 +297,8 @@ socket.on('guessingPhase', async ({ guessNumber, team }) => {
         currentGuesses = guessNumber
         guessEnabled = true
         $('.end-turn-btn').prop('disabled', false)
-        const message = `It is ${player.username}'s turn to guess`
-        socket.emit('sendMessage', { message, team: player.team, gameId: player.gameId })
+        //const message = `It is ${player.username}'s turn to guess`
+        //socket.emit('sendMessage', { message, team: player.team, gameId: player.gameId })
         socket.emit('updateActivePlayer', { playerName: player.username, team: player.team, role: player.role, gameId: player.gameId })
     }
 })
@@ -315,8 +313,8 @@ socket.on('spymasterPhase', async ({ activeTeam }) => {
 
     if (player.role === 'spymaster' && player.team === activeTeam) {
         $clueFormButton.removeAttribute('disabled')
-        const message = `It is ${player.username}'s turn to give a clue.`
-        socket.emit('sendMessage', { message, team: player.team, gameId: player.gameId })
+        //const message = `It is ${player.username}'s turn to give a clue.`
+        //socket.emit('sendMessage', { message, team: player.team, gameId: player.gameId })
         socket.emit('updateActivePlayer', { playerName: player.username, team: player.team, role: player.role, gameId: player.gameId })
 
     }

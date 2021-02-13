@@ -85,7 +85,6 @@ const clearBoard = () => { $boardContainer.innerHTML = '' }
 // Can be made into an import
 const newBoard = async (gameId) => {
     const oldWords = sessionStorage.getItem('wordlist') || []
-    console.log('front end ' + oldWords)
     const boardRaw = await fetch(`/boards`, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ gameId, oldWords }) })
     const board = await boardRaw.json()
     return board
@@ -134,7 +133,7 @@ const joinGame = async (username, lobbyName) => {
     sessionStorage.setItem('gameId', gameId)
     sessionStorage.setItem('lobbyName', lobbyName)
 
-    $('#idHeader span').text(`${lobbyName}`)
+    $('.idHeader span').text(`${lobbyName}`)
 
     // Sends socket call to server for new player, returns them to home page if name was already taken
     // Should refactor code to prevent entry altogether eventually
@@ -174,29 +173,29 @@ const displaysSetup = async (boardId) => {
 
 
 // Chat App functions
-
-socket.on('message', ({ text, team, type = ''}) => {
-    const html = Mustache.render(messageTemplate, { text, team, type})
+const addNewMessage = (html) => {
     $messages.insertAdjacentHTML('beforeend', html)
     $('#messages').animate({scrollTop: $('.message').last().offset().top}, 200)
+}
+
+socket.on('message', ({ playerName, text, team, type = ''}) => {
+    const html = Mustache.render(messageTemplate, { playerName, text, team, type})
+    addNewMessage(html)
 })
 
 socket.on('roleMessage', ({ playerName, playerTeam, role }) => {
     const html = Mustache.render(roleMessageTemplate, { playerName, playerTeam, role })
-    $messages.insertAdjacentHTML('beforeend', html)
-    $('#messages').animate({scrollTop: $('.message').last().offset().top}, 200)
+    addNewMessage(html)
 })
 
 socket.on('clueMessage', ({ playerName, playerTeam, clue }) => {
     const html = Mustache.render(clueMessageTemplate, { playerName, playerTeam, clue })
-    $messages.insertAdjacentHTML('beforeend', html)
-    $('#messages').animate({scrollTop: $('.message').last().offset().top}, 200)
+    addNewMessage(html)
 })
 
 socket.on('guessMessage', ({ playerName, playerTeam, cardWord, cardTeam }) => {
     const html = Mustache.render(guessMessageTemplate, { playerName, playerTeam, cardWord, cardTeam })
-    $messages.insertAdjacentHTML('beforeend', html)
-    $('#messages').animate({scrollTop: $('.message').last().offset().top}, 200)
+    addNewMessage(html)
 })
 
 // Role Assignment
@@ -318,8 +317,6 @@ socket.on('guessingPhase', async ({ guessNumber, team }) => {
         currentGuesses = guessNumber
         guessEnabled = true
         $('.end-turn-btn').prop('disabled', false)
-        //const message = `It is ${player.username}'s turn to guess`
-        //socket.emit('sendMessage', { message, team: player.team, gameId: player.gameId })
         socket.emit('updateActivePlayer', { playerName: player.username, team: player.team, role: player.role, gameId: player.gameId })
     }
 })
@@ -334,8 +331,6 @@ socket.on('spymasterPhase', async ({ activeTeam }) => {
 
     if (player.role === 'spymaster' && player.team === activeTeam) {
         $clueFormButton.removeAttribute('disabled')
-        //const message = `It is ${player.username}'s turn to give a clue.`
-        //socket.emit('sendMessage', { message, team: player.team, gameId: player.gameId })
         socket.emit('updateActivePlayer', { playerName: player.username, team: player.team, role: player.role, gameId: player.gameId })
 
     }
@@ -434,7 +429,7 @@ $('.end-turn-btn').on('click', async() => {
     guessEnabled = false
     activeTeam = player.team === 'red' ? 'blue' : 'red'
 
-    socket.emit('sendMessage',{ message: `${player.team}'s turn is over.`, team: player.team, gameId: player.gameId})
+    socket.emit('sendMessage',{ playerName: player.username, text: ` ended their turn.`, team: player.team, gameId: player.gameId})
     socket.emit('updateClue', { gameId: player.gameId })
     socket.emit('end-turn', { activeTeam, gameId: player.gameId })
     $('.end-turn-btn').prop('disabled', true)

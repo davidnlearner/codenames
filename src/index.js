@@ -42,13 +42,12 @@ io.on('connection', (socket) => {
             socket.emit('new-player-role', role)
         })
 
-        socket.emit('message', { text: `Welcome ${player.username}!`, team: player.team })
-        socket.broadcast.to(player.gameId).emit('message', {text: `${player.username} has joined!`, team: player.team})
+        socket.broadcast.to(player.gameId).emit('message', {playerName: player.username, text: ` has joined!`, team: player.team})
         callback({ player })
     })
 
-    socket.on('sendMessage', ({ message, team, gameId }) => {
-        io.to(gameId).emit('message', { text: message, team })
+    socket.on('sendMessage', ({ playerName, text, team, gameId }) => {
+        io.to(gameId).emit('message', { playerName, text, team })
     })
 
     socket.on('new-role', async ({ role, team, playerId }) => {
@@ -63,15 +62,12 @@ io.on('connection', (socket) => {
         io.to(player.gameId).emit('new-player-role', { role, team, username: player.username, gameFull })
         
         io.to(player.gameId).emit('roleMessage',  { playerName: player.username, playerTeam: team, role })
-        //io.to(player.gameId).emit('message',  { text: `${player.username} has become a ${role} for the ${team} team!`, team })
     })
 
     socket.on('sendClue', async ({ clue, guessNumber, playerId }, callback) => {
         const player = await Player.findOne({ _id: playerId })
-        //const text = `New clue: ${clue} ${guessNumber}`
         const clueText = `${clue} ${guessNumber}`
         io.to(player.gameId).emit('guessingPhase', { guessNumber, team: player.team })
-        //io.to(player.gameId).emit('message',  { text, team: player.team, type: 'clue' })
         io.to(player.gameId).emit('clueMessage',  { playerName: player.username , playerTeam: player.team, clue: clueText })
         io.to(player.gameId).emit('updateGameStatusClue', {clue, guessNumber: (parseInt(guessNumber) + 1) })
         callback()  
@@ -83,17 +79,12 @@ io.on('connection', (socket) => {
         const cardTeam = board.overlay[index]
         const opposingTeam = player.team === 'red' ? 'blue' : 'red'
 
-        // io.to(player.gameId).emit('message',  { text: `${player.username} guessed ${word}`, team: player.team })
-        // io.to(player.gameId).emit('message', { text: `${word} belongs to the ${cardTeam} team.`, team: cardTeam })
-
         io.to(player.gameId).emit('guessMessage', { playerName: player.username, playerTeam: player.team, cardWord: word.toUpperCase(), cardTeam })
         io.to(player.gameId).emit('card-reveal', { cardTeam, word })
 
         if (cardTeam === player.team) {
             io.to(player.gameId).emit('update-score', { cardTeam })
             if (guessNumber !== 0) {
-            //     let guessWord = guessNumber===1 ? 'guess' : 'guesses'
-            //     io.to(player.gameId).emit('message', { text: `The ${player.team} team has ${guessNumber} ${guessWord} left.`, team: player.team })
                 io.to(player.gameId).emit('updateGameStatusClue', { guessNumber })
                 return callback({yourTurn:true, team: player.team})
             }
@@ -106,7 +97,6 @@ io.on('connection', (socket) => {
             io.to(player.gameId).emit('update-score', { cardTeam })
         }
 
-        io.to(player.gameId).emit('message',{ text: `${player.team}'s turn is over.`, team: player.team})
         io.to(player.gameId).emit('updateGameStatusClue', { clue: ' - ', guessNumber: ' - ' })
         callback({yourTurn:false, team: opposingTeam})
         io.to(player.gameId).emit('spymasterPhase', { activeTeam: opposingTeam })
@@ -161,7 +151,7 @@ io.on('connection', (socket) => {
 
         if (player) {
             io.to(player.gameId).emit('reset-player-role', { role: player.role, team: player.team }) 
-            io.to(player.gameId).emit('message', { text: `${player.username} has left.`, team: player.team })
+            io.to(player.gameId).emit('message', { playerName: player.username, text: ` has left.`, team: player.team })
             const remainingPlayers = await Player.find({ gameId: player.gameId })
             if (remainingPlayers.length === 0) {
                 await Game.findOneAndDelete({ _id: player.gameId })
@@ -179,7 +169,7 @@ io.on('connection', (socket) => {
         const player = await Player.findOneAndDelete({ _id: playerId })
         if (player) {
             socket.broadcast.to(player.gameId).emit('reset-player-role', { role: player.role, team: player.team })
-            socket.broadcast.to(player.gameId).emit('message', { text: `${player.username} has left.`, team: player.team })
+            io.to(player.gameId).emit('message', { playerName: player.username, text: ` has left.`, team: player.team })
 
             const remainingPlayers = await Player.find({ gameId: player.gameId })
             if (remainingPlayers.length === 0) {

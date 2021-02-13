@@ -237,7 +237,6 @@ body{
 
 .message span {
     font-weight: bold;
-    text-transform: capitalize;
 }
 
 .message.red-team {
@@ -270,6 +269,10 @@ body{
     color: rgba(13, 25, 189, 0.7);
 }
 
+.message-text.role {
+    text-transform: capitalize;
+}
+
 .message-text.clue {
     background-color: white;
     border: 2px solid black;
@@ -289,10 +292,6 @@ body{
     font-weight: bold;
 }
 
-#victory-menu hr {
-    margin: 1rem auto;
-}
-
 .centered-form__error-message {
     height: 1.5rem;
     font-size: .9rem;
@@ -305,7 +304,7 @@ body{
     align-content: unset;
 }
 
-#start-menu button{
+#start-menu button, #victory-menu button{
     max-width: 18rem;
     margin: auto;
 }
@@ -319,13 +318,13 @@ body{
     align-self: center;
 }
 
-#idHeader {
+.idHeader {
     text-align: center;
     font-size: 1.5rem;
     padding: 1rem .25rem;
     margin: 0;
 }
 
-#idHeader span {
+.idHeader span {
     font-weight: bold;
 }

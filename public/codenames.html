@@ -46,7 +46,7 @@
                             class="team-join-btn">Join</button></div>
                 </div>
                 <div id='start-menu' class="status-box">
-                    <p id="idHeader">Lobby: <span></span></p>
+                    <p class="idHeader">Lobby: <span></span></p>
                     <button id='start-btn' disabled>Start Game</button>
                     <hr class="lines">
                     <button class='leave-game-btn'>Leave Game</button>
@@ -60,6 +60,7 @@
                     <button class='leave-game-btn'>Leave Game</button>
                 </div>
                 <div id='victory-menu' class="status-box">
+                    <p class="idHeader">Lobby: <span></span></p>
                     <button id='new-game-btn'>New Game?</button>
                     <hr class="lines">
                     <button class='leave-game-btn'>Leave Game</button>
@@ -81,7 +82,7 @@
 
         <script id="message-template" type="text/html">
             <div class="message {{team}}-team {{type}}">
-                <p>{{text}}</p>
+                <p><span class="message-text {{team}}-team">{{playerName}}</span>{{text}}</p>
             </div>
         </script>
 

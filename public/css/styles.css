@@ -211,15 +211,14 @@ body{
 }
 
 #clue-form input {
-    width: 90%;
+    width: 100rem;
+    margin: auto;
+    padding: .5rem 0 .5rem .3rem;
+    margin-bottom: .5rem;
+    max-width: 97%;
 }
 
-.lines {
-    max-width: 20rem;
-    width: 90%;
-    border-style: none;
-    border-bottom: 1px solid black;
-}
+
 
 
 /* Message styles */
@@ -290,6 +289,10 @@ body{
     font-weight: bold;
 }
 
+#victory-menu hr {
+    margin: 1rem auto;
+}
+
 .centered-form__error-message {
     height: 1.5rem;
     font-size: .9rem;
@@ -298,7 +301,31 @@ body{
     font-family: Arial, Helvetica, sans-serif;
 }
 
+#start-menu {
+    align-content: unset;
+}
+
 #start-menu button{
     max-width: 18rem;
     margin: auto;
+}
+
+.lines {
+    max-width: 20rem;
+    width: 90%;
+    border-style: none;
+    border-bottom: 1px solid black;
+    margin: 0 auto;
+    align-self: center;
+}
+
+#idHeader {
+    text-align: center;
+    font-size: 1.5rem;
+    padding: 1rem .25rem;
+    margin: 0;
+}
+
+#idHeader span {
+    font-weight: bold;
 }

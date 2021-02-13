@@ -1,6 +1,9 @@
 const socket = io()
 
-const clickSound = new Audio("/sounds/clickSound.wav")
+const endTurnSound = new Audio("/sounds/end-turn.wav")
+const victorySound = new Audio("/sounds/victory.wav")
+const correctGuessSound = new Audio("/sounds/correct-guess.wav")
+
 
 // Elements
 const $boardContainer = document.querySelector("#board-container")
@@ -126,6 +129,8 @@ const joinGame = async (username, lobbyName) => {
     // Stores gameId in session storage
     sessionStorage.setItem('gameId', gameId)
 
+    $('#idHeader span').text(`${lobbyName}`)
+
     // Sends socket call to server for new player, returns them to home page if name was already taken
     // Should refactor code to prevent entry altogether eventually
     // Would require html changes to start
@@ -142,6 +147,10 @@ const joinGame = async (username, lobbyName) => {
     })
 
     displaysSetup(board._id)
+
+    if (lobbyName === 'TEST') {
+        $('#start-btn').prop('disabled', false)
+    }
 }
 
 // Displays current board, starting team, and adjusts score counter
@@ -164,25 +173,25 @@ const displaysSetup = async (boardId) => {
 socket.on('message', ({ text, team, type = ''}) => {
     const html = Mustache.render(messageTemplate, { text, team, type})
     $messages.insertAdjacentHTML('beforeend', html)
-    $('#messages').animate({scrollTop: $('.message').last().offset.top}, 200)
+    $('#messages').animate({scrollTop: $('.message').last().offset().top}, 200)
 })
 
 socket.on('roleMessage', ({ playerName, playerTeam, role }) => {
     const html = Mustache.render(roleMessageTemplate, { playerName, playerTeam, role })
     $messages.insertAdjacentHTML('beforeend', html)
-    $('#messages').animate({scrollTop: $('.message').last().offset.top}, 200)
+    $('#messages').animate({scrollTop: $('.message').last().offset().top}, 200)
 })
 
 socket.on('clueMessage', ({ playerName, playerTeam, clue }) => {
     const html = Mustache.render(clueMessageTemplate, { playerName, playerTeam, clue })
     $messages.insertAdjacentHTML('beforeend', html)
-    $('#messages').animate({scrollTop: $('.message').last().offset.top}, 200)
+    $('#messages').animate({scrollTop: $('.message').last().offset().top}, 200)
 })
 
 socket.on('guessMessage', ({ playerName, playerTeam, cardWord, cardTeam }) => {
     const html = Mustache.render(guessMessageTemplate, { playerName, playerTeam, cardWord, cardTeam })
     $messages.insertAdjacentHTML('beforeend', html)
-    $('#messages').animate({scrollTop: $('.message').last().offset.top}, 200)
+    $('#messages').animate({scrollTop: $('.message').last().offset().top}, 200)
 })
 
 // Role Assignment
@@ -219,16 +228,20 @@ $('.team-join-btn').on('click', function (e) {joinTeamEvent(e)})
 
 
 // Recieves claimed roles and adjusts user's display to show username in place of button
-socket.on('new-player-role', ({ role, team, username }) => {
+socket.on('new-player-role', ({ role, team, username, gameFull }) => {
     const wrapper = document.querySelector(`#${role}-${team}-wrapper`)
     wrapper.innerHTML = `<p class='role-username card-word'> ${username} </p>`
-
+    if (gameFull) {
+        $('#start-btn').prop('disabled', false)
+    }
 })
 
 socket.on('reset-player-role', async ({ role, team }) => {
     if (team !== 'civilian') {
         $(`#${role}-${team}-wrapper`).innerHTML = `<button team='${team}' role='${role}' class="team-join-btn">Join</button>`
     }
+
+    $('#start-btn').prop('disabled', true)
 
     const playerId = sessionStorage.getItem('playerId')
     const playerRaw = await fetch(`/players/${playerId}`)
@@ -258,6 +271,7 @@ const cardEvent = async (word) => {
             socket.emit('cluePhase', { team })
             $('.end-turn-btn').prop('disabled', true)
         } else {
+            correctGuessSound.play()
             currentGuesses -= 1
             guessEnabled = true
         }
@@ -290,7 +304,7 @@ socket.on('guessingPhase', async ({ guessNumber, team }) => {
     const playerRaw = await fetch(`/players/${playerId}`)
     const player = await playerRaw.json()
 
-    clickSound.play();
+    endTurnSound.play();
 
     // Checks if it's this user's turn
     if (player.role === 'guesser' && player.team === team) {
@@ -309,7 +323,7 @@ socket.on('spymasterPhase', async ({ activeTeam }) => {
     const playerRaw = await fetch(`/players/${playerId}`)
     const player = await playerRaw.json()
 
-    clickSound.play();
+    endTurnSound.play();
 
     if (player.role === 'spymaster' && player.team === activeTeam) {
         $clueFormButton.removeAttribute('disabled')
@@ -344,6 +358,8 @@ socket.on('assassin-game-over', ({ opposingTeam }) => {
 })
 
 const teamVictory = (team) => {
+    victorySound.play()
+
     const boardId = sessionStorage.getItem('boardId')
     addBoardOverlay(boardId)
    
@@ -379,7 +395,7 @@ socket.on('updateGameStatusPlayer', ({playerName, team, role}) => {
         else {
             message = `It's ${playerName}'s turn to guess.`
         }
-        $(`#current-playerName`).text(message)
+        $(`#current-playerName span`).text(message)
         $(`#current-playerName`).css('background-color', `var(--${team}-team-color`)
 })
 
@@ -428,6 +444,8 @@ socket.on('new-round', async ({gameId}) => {
     $('.counter').text('8')
 
     $('.team-join-btn').on('click', function (e) {joinTeamEvent(e)})
+
+    $('#start-btn').prop('disabled', true)
 
     const boardRaw = await fetch(`/boards/game/${gameId}`)
     const board = await boardRaw.json()

@@ -26,7 +26,7 @@
 
             <div id='clue-form-box'>
                 <form id='clue-form' autocomplete="off">
-                    <input name="clue" placeholder='Clue' type="text"  oninput="this.value = this.value.toUpperCase()" onkeypress="return lettersOnlyCaps(event)" required>
+                    <input name="clue" placeholder='Clue' type="text"  oninput="this.value = this.value.toUpperCase()" onkeypress="return lettersOnly(event)" required>
                     <input name="guessNumber" placeholder='Guesses' type="number" min="0" max="9" onkeypress="return numbersOnly(event)" required>
                     <br>
                     <button disabled>Send</button>
@@ -46,12 +46,13 @@
                             class="team-join-btn">Join</button></div>
                 </div>
                 <div id='start-menu' class="status-box">
-                    <button id='start-btn'>Start Game</button>
+                    <p id="idHeader">Lobby: <span></span></p>
+                    <button id='start-btn' disabled>Start Game</button>
                     <hr class="lines">
                     <button class='leave-game-btn'>Leave Game</button>
                 </div>
                 <div id="game-status-box" class="status-box">
-                    <div><span id="current-playerName" class="status-box-title"></span> </div>
+                    <div  id="current-playerName"><span class="status-box-title"></span> </div>
                     <div><span class="status-box-title">Clue:</span> <span id="current-clue" class="status-box-title">-</span> </div>
                     <div><span class="status-box-title">Guesses remaining:</span> <span id="current-guessNumber" class="status-box-title">-</span> </div>
                     <button class='end-turn-btn' disabled='true'>End Turn</button>
@@ -59,7 +60,6 @@
                     <button class='leave-game-btn'>Leave Game</button>
                 </div>
                 <div id='victory-menu' class="status-box">
-                    <div><span class='victory-msg'>Victory to Assassins</span></div>
                     <button id='new-game-btn'>New Game?</button>
                     <hr class="lines">
                     <button class='leave-game-btn'>Leave Game</button>

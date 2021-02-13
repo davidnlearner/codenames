@@ -18,7 +18,7 @@
                     <input type="text" name="username" placeholder="Enter username" onkeypress="return lettersOnly(event)" required>
                     <br><br>
                     <label>Game Name</label>
-                    <input type="text" name="lobbyName" placeholder="Game name" onkeypress="return lettersOnly(event)" required>
+                    <input type="text" name="lobbyName" placeholder="Game name" oninput="this.value = this.value.toUpperCase()" onkeypress="return lettersAndNumbersOnly(event)" required>
                     <br>
                     <div class="centered-form__error-message"></div>
                     <button id="join-btn">Create/Join a Game</button>

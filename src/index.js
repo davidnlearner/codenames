@@ -58,7 +58,9 @@ io.on('connection', (socket) => {
         game.playerRoles.push({ role, team, username: player.username })
         game.save()
 
-        io.to(player.gameId).emit('new-player-role', { role, team, username: player.username })
+        const gameFull = game.playerRoles >= 4 ? true : false
+
+        io.to(player.gameId).emit('new-player-role', { role, team, username: player.username, gameFull })
         
         io.to(player.gameId).emit('roleMessage',  { playerName: player.username, playerTeam: team, role })
         //io.to(player.gameId).emit('message',  { text: `${player.username} has become a ${role} for the ${team} team!`, team })
@@ -122,9 +124,14 @@ io.on('connection', (socket) => {
         io.to(gameId).emit('spymasterPhase', { activeTeam })
     })
 
-    socket.on('startGame', ({gameId, startTeam}) => {
-        io.to(gameId).emit('revealGameStatus')
-        io.to(gameId).emit('spymasterPhase', { activeTeam: startTeam })
+    socket.on('startGame', async ({gameId, startTeam}) => {
+        const game = await Game.findOne({ _id: gameId })
+        const gameFull = game.playerRoles >= 4 ? true : false
+
+        if (gameFull || game.lobbyName === 'TEST') {
+            io.to(gameId).emit('revealGameStatus')
+            io.to(gameId).emit('spymasterPhase', { activeTeam: startTeam })
+        }
     })
 
     socket.on('clear-board', async ({gameId}) => {

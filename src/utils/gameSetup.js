@@ -11,12 +11,12 @@ const wordlistBuffer = fs.readFileSync(wordListPath, (err, data) => {
 const rawText = wordlistBuffer.toString()
 const wordlist = rawText.split('\n')
 
-const newWords = () => {
+const newWords = (oldWords = []) => {
   const gameWords = []
   while(gameWords.length < 25){
     const randomNumber = Math.floor(Math.random() * wordlist.length)
     const newWord = wordlist[randomNumber]
-    if (!gameWords.find((word) => word === newWord)){
+    if (!gameWords.find((word) => word === newWord) && !oldWords.includes(newWord)){
       gameWords.push(newWord)
     }
   }

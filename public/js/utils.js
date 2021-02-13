@@ -9,6 +9,11 @@ const lettersAndNumbersOnly = (e) => {
     return ((key >= 65 && key <= 90) || key == 8 || (key >= 97 && key <= 122) || key == 13 || (key >= 48 && key <= 57) || key == 45)
 }
 
+const numbersOnly = (e) => {
+    const key = e.keyCode
+    return ((key >= 48 && key <= 57) || key == 8 || key == 13)
+}
+
 const dupUserChecker = async function(e) {
     e.preventDefault()  
     

@@ -2,6 +2,7 @@ const socket = io()
 
 const endTurnSound = new Audio("/sounds/end-turn.wav")
 const victorySound = new Audio("/sounds/victory.wav")
+victorySound.volume = .5
 const correctGuessSound = new Audio("/sounds/correct-guess.wav")
 
 
@@ -36,6 +37,7 @@ const generateBoard = async (boardId) => {
 
     // Saves startTeam in session storage
     sessionStorage.setItem('startTeam', data.startTeam)
+    sessionStorage.setItem('wordlist', data.wordlist)
 
     // Adds a card for each word to html
     data.wordlist.forEach((word) => {
@@ -82,7 +84,9 @@ const clearBoard = () => { $boardContainer.innerHTML = '' }
 // Creates a new board and returns it
 // Can be made into an import
 const newBoard = async (gameId) => {
-    const boardRaw = await fetch(`/boards`, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ gameId }) })
+    const oldWords = sessionStorage.getItem('wordlist') || []
+    console.log('front end ' + oldWords)
+    const boardRaw = await fetch(`/boards`, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ gameId, oldWords }) })
     const board = await boardRaw.json()
     return board
 }
@@ -128,6 +132,7 @@ const joinGame = async (username, lobbyName) => {
     const gameId = game._id
     // Stores gameId in session storage
     sessionStorage.setItem('gameId', gameId)
+    sessionStorage.setItem('lobbyName', lobbyName)
 
     $('#idHeader span').text(`${lobbyName}`)
 
@@ -238,10 +243,12 @@ socket.on('new-player-role', ({ role, team, username, gameFull }) => {
 
 socket.on('reset-player-role', async ({ role, team }) => {
     if (team !== 'civilian') {
-        $(`#${role}-${team}-wrapper`).innerHTML = `<button team='${team}' role='${role}' class="team-join-btn">Join</button>`
+        $(`#${role}-${team}-wrapper`).html(`<button team='${team}' role='${role}' class="team-join-btn">Join</button>`)
     }
-
-    $('#start-btn').prop('disabled', true)
+    const lobbyName = sessionStorage.getItem('lobbyName')
+    if ( lobbyName !== 'TEST' ) {
+        $('#start-btn').prop('disabled', true)
+    }
 
     const playerId = sessionStorage.getItem('playerId')
     const playerRaw = await fetch(`/players/${playerId}`)
@@ -434,11 +441,11 @@ $('.end-turn-btn').on('click', async() => {
 })
 
 socket.on('new-round', async ({gameId}) => {
-    
+    $('#victory-display').css('display', 'none')
     //Removing player roles and teams
     const changes = { 'role': 'guesser', 'team': 'civilian' }
     const playerId = sessionStorage.getItem('playerId')
-    const response = await fetch(`/players/${playerId}`, { method: 'PATCH', headers: { "Content-Type": "application/json" }, body: JSON.stringify(changes) })
+    await fetch(`/players/${playerId}`, { method: 'PATCH', headers: { "Content-Type": "application/json" }, body: JSON.stringify(changes) })
 
     $clueForm.style.display = 'none'
     $('.counter').text('8')

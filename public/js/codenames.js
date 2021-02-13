@@ -1,8 +1,9 @@
 const socket = io()
 
+//Sounds
 const endTurnSound = new Audio("/sounds/end-turn.wav")
 const victorySound = new Audio("/sounds/victory.wav")
-victorySound.volume = .5
+victorySound.volume = .3
 const correctGuessSound = new Audio("/sounds/correct-guess.wav")
 
 
@@ -43,7 +44,7 @@ const generateBoard = async (boardId) => {
     data.wordlist.forEach((word) => {
         const node = document.createElement('div')
         node.className = "card"
-        node.id = `${word}-card-id`
+        node.id = `${word.replace(' ', '_')}-card-id`
         node.setAttribute(`revealed`, 'false')
         node.innerHTML = `<div class='card-word'><span>${word}</span></div>`
         $boardContainer.appendChild(node)
@@ -338,7 +339,7 @@ socket.on('spymasterPhase', async ({ activeTeam }) => {
 
 // Changes css on revealed cards
 socket.on('card-reveal', ({ cardTeam, word }) => {
-    const card = document.querySelector(`#${word}-card-id`)
+    const card = document.querySelector(`#${word.replace(' ', '_')}-card-id`)
     card.classList.add(`${cardTeam}-card`)
     card.setAttribute(`revealed`, 'true')
 })
@@ -360,12 +361,16 @@ socket.on('assassin-game-over', ({ opposingTeam }) => {
 })
 
 const teamVictory = (team) => {
+    // Grab player team and play win if player.team === team or lose if !=
     victorySound.play()
 
     const boardId = sessionStorage.getItem('boardId')
     addBoardOverlay(boardId)
    
+    repositionVictoryMessage()
+
     const msg = `The ${team} team wins!`
+
     $('#victory-display')
         .text(msg)
         .css("display", "block")
@@ -373,6 +378,22 @@ const teamVictory = (team) => {
     $('#victory-menu').css("display", "grid")
     $("#game-status-box").css("display", "none")
 }
+
+const repositionVictoryMessage = () => {
+    const gameLogWidth = $('.chat__main').width()
+    const gameBoardWidth = window.innerWidth - gameLogWidth
+    const gameBoardHeight = $('#board-container').height()
+
+    $('#victory-display')
+        .css('left', gameBoardWidth/2 + gameLogWidth)
+        .css('top', gameBoardHeight/2)
+}
+
+$(window).resize(() => {
+    if ($('#victory-display').css('display') !== 'none') {
+        repositionVictoryMessage()
+    }
+})
 
 $('.leave-game-btn').on('click', () => {
     const playerId = sessionStorage.getItem('playerId')

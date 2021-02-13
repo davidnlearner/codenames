@@ -284,12 +284,15 @@ body{
 #victory-display{
     display: none;
     position: absolute;
-    opacity: 0.75;
-    background-color: grey;
-    font-size: 5rem;
+    background-color: rgba(255, 255, 255, .9);
+    font-size: 3rem;
     color: black;
-    padding: 10rem;
+    padding: 5rem;
     font-weight: bold;
+    transform: translate(-50%, -50%);
+    border: 3px solid black;
+    border-radius: 5px;
+    min-width: 30rem;
 }
 
 .centered-form__error-message {
@@ -300,11 +303,11 @@ body{
     font-family: Arial, Helvetica, sans-serif;
 }
 
-#start-menu {
+#start-menu, #victory-menu {
     align-content: unset;
 }
 
-#start-menu button, #victory-menu button{
+#start-menu button, #victory-menu button, #game-status-box button{
     max-width: 18rem;
     margin: auto;
 }

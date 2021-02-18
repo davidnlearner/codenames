@@ -4,9 +4,15 @@ const lettersOnly = (e) => {
     return ((key >= 65 && key <= 90) || key == 8 || (key >= 97 && key <= 122) || key == 13)
 }
 
-const lettersAndNumbersOnly = (e) => {
+const usernameLettersOnly = (e) => {
     const key = e.keyCode
-    return ((key >= 65 && key <= 90) || key == 8 || (key >= 97 && key <= 122) || key == 13 || (key >= 48 && key <= 57) || key == 45)
+    // In order CAPITAL LETTERS, backspace, lower case letters, return key
+    return ((key >= 65 && key <= 90) || key == 8 || (key >= 97 && key <= 122) || key == 13 || key == 32 || (key >= 45 && key <= 47))
+}
+
+const lobbyNameRestriction = (e) => {
+    const key = e.keyCode
+    return ((key >= 65 && key <= 90) || key == 8 || (key >= 97 && key <= 122) || key == 13 || (key >= 47 && key <= 57) || key == 45 || key == 95)
 }
 
 const numbersOnly = (e) => {

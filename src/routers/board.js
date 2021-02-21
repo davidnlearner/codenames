@@ -34,7 +34,7 @@ router.get('/boards/game/:gameId', async (req, res) => {
 router.get('/boards/wordlist/:id', async (req, res) => {
     const board = await Board.findOne({ _id: req.params.id })
     try {
-        res.send({wordlist: board.wordlist, startTeam: board.startTeam})
+        res.send({wordlist: board.wordlist, startTeam: board.startTeam, revealedCards: board.revealedCards})
     } catch (e) {
         res.status(500).send(e)
     }

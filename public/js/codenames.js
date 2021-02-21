@@ -3,7 +3,7 @@ const socket = io()
 //Sounds
 const endTurnSound = new Audio("/sounds/end-turn.wav")
 const victorySound = new Audio("/sounds/victory.wav")
-victorySound.volume = .3
+victorySound.volume = .4
 const correctGuessSound = new Audio("/sounds/correct-guess.wav")
 
 
@@ -50,6 +50,12 @@ const generateBoard = async (boardId) => {
         $boardContainer.appendChild(node)
     });
 
+    data.revealedCards.forEach( (cardData) => {
+        const card = document.querySelector(`#${cardData.word.replace(' ', '_')}-card-id`)
+        card.classList.add(`${cardData.cardTeam}-card`)
+        card.setAttribute(`revealed`, 'true')
+    })
+
     $('.card').on('click', function () {
         const element = $(this)
         if (element.attr('revealed') === 'false' && guessEnabled) {
@@ -58,6 +64,7 @@ const generateBoard = async (boardId) => {
         }
     })
 }
+
 
 
 // Adds team colors to cards
@@ -260,6 +267,18 @@ socket.on('reset-player-role', async ({ role, team }) => {
 
 })
 
+socket.on('update-active-state', ({gameState}) => {
+    $(".status-box").css("display", "none")
+
+    if ( gameState === 'pregame' ) {
+        $('#start-menu').css("display", "grid")
+    } else if ( gameState === 'ongoing' ) {
+        $('#game-status-box').css("display", "grid")
+    } else if ( gameState === 'victory-screen' ) {
+        $('#victory-menu').css("display", "grid")
+    }
+})
+
 // Game Events
 
 // Event cards are given
@@ -345,24 +364,29 @@ socket.on('card-reveal', ({ cardTeam, word }) => {
 })
 
 
+
+
 // Updates cards remaining in teambox on card reveal
 socket.on('update-score', ({ cardTeam }) => {
     const $counter = document.querySelector(`#${cardTeam}-team-counter`)
     $counter.innerText = parseInt($counter.innerText) - 1
-
-    if ($counter.innerText === '0') {
-        //WIN
-        teamVictory(cardTeam)
-    }
 })
 
 socket.on('assassin-game-over', ({ opposingTeam }) => {
     teamVictory(opposingTeam)
 })
 
+socket.on('card-victory', ({team}) => {
+    teamVictory(team)
+})
+
+
+
 const teamVictory = (team) => {
     // Grab player team and play win if player.team === team or lose if !=
     victorySound.play()
+
+    guessEnabled = false
 
     const boardId = sessionStorage.getItem('boardId')
     addBoardOverlay(boardId)
@@ -375,8 +399,8 @@ const teamVictory = (team) => {
         .text(msg)
         .css("display", "block")
 
+    $(".status-box").css("display", "none")
     $('#victory-menu').css("display", "grid")
-    $("#game-status-box").css("display", "none")
 }
 
 const repositionVictoryMessage = () => {
@@ -476,8 +500,8 @@ socket.on('new-round', async ({gameId}) => {
 
     $messages.innerHTML = ''
 
+    $('.status-box').css("display", "none")
     $("#start-menu").css("display", "grid")
-    $('#victory-menu').css("display", "none")
 })
 
 

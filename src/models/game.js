@@ -19,6 +19,10 @@ const gameSchema = new mongoose.Schema({
         type: Array,
         required: true,
         default: []
+    },
+    activeState: {
+        type: String,
+        default: 'pregame'
     }
 })
 

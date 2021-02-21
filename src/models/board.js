@@ -17,6 +17,10 @@ const boardSchema = new mongoose.Schema({
     overlay: {
         type: Array,
         required: true,
+    },
+    revealedCards: {
+        type: Array,
+        default: []
     }
 })
 // add game room name?

@@ -16,7 +16,6 @@ const publicDirectoryPath = path.join(__dirname, '../public')
 
 app.use(express.static(publicDirectoryPath))
 
-
 io.on('connection', (socket) => {
 
     socket.on('join', async ({ playerName, gameId }, callback) => {
@@ -41,6 +40,8 @@ io.on('connection', (socket) => {
         game.playerRoles.forEach((role) => {
             socket.emit('new-player-role', role)
         })
+
+        socket.emit('update-active-state', {gameState: game.activeState})
 
         socket.broadcast.to(player.gameId).emit('message', {playerName: player.username, text: ` has joined!`, team: player.team})
         callback({ player })
@@ -82,6 +83,17 @@ io.on('connection', (socket) => {
         io.to(player.gameId).emit('guessMessage', { playerName: player.username, playerTeam: player.team, cardWord: word.toUpperCase(), cardTeam })
         io.to(player.gameId).emit('card-reveal', { cardTeam, word })
 
+        board.revealedCards = [...board.revealedCards, {cardTeam, word}]
+        board.save()
+
+        const winningTeam = assessVictory(board)
+        if (winningTeam) {
+            io.to(player.gameId).emit('card-victory', { team: winningTeam })
+            const game = await Game.findOne({ _id: player.gameId })
+            game.activeState = 'victory-screen'
+            game.save()
+        }
+
         if (cardTeam === player.team) {
             io.to(player.gameId).emit('update-score', { cardTeam })
             if (guessNumber !== 0) {
@@ -91,6 +103,9 @@ io.on('connection', (socket) => {
         } 
         else if (cardTeam === 'assassin') {
             io.to(player.gameId).emit('assassin-game-over', { opposingTeam })
+            const game = await Game.findOne({ _id: player.gameId })
+            game.activeState = 'victory-screen'
+            game.save()
             return callback({yourTurn:false, team: opposingTeam})
         } 
         else if (cardTeam === opposingTeam) {
@@ -119,6 +134,8 @@ io.on('connection', (socket) => {
         const gameFull = game.playerRoles.length >= 4 ? true : false
 
         if (gameFull || game.lobbyName === 'TEST') {
+            game.activeState = 'ongoing'
+            game.save()
             io.to(gameId).emit('revealGameStatus')
             io.to(gameId).emit('spymasterPhase', { activeTeam: startTeam })
         }
@@ -141,8 +158,11 @@ io.on('connection', (socket) => {
         await Board.findOneAndDelete({ gameId })        
     })
 
-    socket.on('send-restart', ({gameId}) => {
+    socket.on('send-restart', async ({gameId}) => {
         io.to(gameId).emit('new-round', {gameId})
+        const game = await Game.findOne({ _id: player.gameId })
+        game.activeState = 'pregame'
+        game.save()
     })
 
 
@@ -185,6 +205,20 @@ io.on('connection', (socket) => {
     })
 
 })
+
+
+const assessVictory = ({startTeam, revealedCards}) => {
+    ['red', 'blue'].forEach((team) => {
+        const score = revealedCards.filter((card) => card.cardTeam === team).length
+        if (team === startTeam && score === 9){
+            return team
+        } else if ( team !== startTeam && score === 8){
+            return team
+        }
+    })
+    return undefined
+}
+
 
 
 

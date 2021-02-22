@@ -351,7 +351,7 @@ Vet
 Night
 Air
 Battery
-Genious
+Genius
 Shop
 Bottle
 Stadium
@@ -380,7 +380,7 @@ Copper
 Beach
 Bell
 Leprechaun
-Pheonix
+Phoenix
 Force
 Boom
 Fork

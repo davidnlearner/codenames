@@ -5,16 +5,6 @@ const gameSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    score: {
-        type: Array,
-        required: true,
-        default: [0,0]
-    },
-    currentRound: {
-        type: Number,
-        required: true,
-        default: 0
-    },
     playerRoles: {
         type: Array,
         required: true,
@@ -23,6 +13,15 @@ const gameSchema = new mongoose.Schema({
     activeState: {
         type: String,
         default: 'pregame'
+    },
+    createdAt: {
+        type: Date,
+        required: true
+    },
+    oldWords: {
+        type: Array,
+        required: true,
+        default: []
     }
 })
 

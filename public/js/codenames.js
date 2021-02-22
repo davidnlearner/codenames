@@ -212,7 +212,6 @@ socket.on('guessMessage', ({ playerName, playerTeam, cardWord, cardTeam }) => {
 const joinTeamEvent = async (e) => {
         const role = e.target.getAttribute('role')
         const team = e.target.getAttribute('team')
-        const startTeam = sessionStorage.getItem('startTeam')
 
         $('.team-join-btn').prop('disabled', true)
 
@@ -220,29 +219,23 @@ const joinTeamEvent = async (e) => {
         const changes = { 'role': role, 'team': team }
         const playerId = sessionStorage.getItem('playerId')
         const response = await fetch(`/players/${playerId}`, { method: 'PATCH', headers: { "Content-Type": "application/json" }, body: JSON.stringify(changes) })
-        const player = await response.json()
-
-        // Changes display to give card overlay and give clue form if they become a spymaster
-        if (player.role === 'spymaster') {
-            const boardId = sessionStorage.getItem('boardId')
-            addBoardOverlay(boardId, player.role)
-            $clueForm.style.display = 'block'
-            if (player.team === startTeam) {
-                socket.emit('updateActivePlayer', { playerName: player.username, team: player.team, role: player.role, gameId: player.gameId })
-            }
-
-        }
 
         socket.emit('new-role', { role, team, playerId })
 }
 
-$('.team-join-btn').on('click', function (e) {joinTeamEvent(e)})
 
+$('.team-join-btn').on('click', function (e) {
+    joinTeamEvent(e)})
 
 // Recieves claimed roles and adjusts user's display to show username in place of button
 socket.on('new-player-role', ({ role, team, username, gameFull }) => {
+    const playerId = sessionStorage.getItem('playerId')
     const wrapper = document.querySelector(`#${role}-${team}-wrapper`)
     wrapper.innerHTML = `<p class='role-username card-word'> ${username} </p>`
+    $(`#${role}-${team}-wrapper`)
+        .off('click')
+        .on('click', () => socket.emit('reset-role', {playerId}))
+
     if (gameFull) {
         $('#start-btn').prop('disabled', false)
     }
@@ -251,6 +244,10 @@ socket.on('new-player-role', ({ role, team, username, gameFull }) => {
 socket.on('reset-player-role', async ({ role, team }) => {
     if (team !== 'civilian') {
         $(`#${role}-${team}-wrapper`).html(`<button team='${team}' role='${role}' class="team-join-btn">Join</button>`)
+        $(`#${role}-${team}-wrapper`)
+            .off('click')
+            .on('click', function (e) { joinTeamEvent(e) })
+            
     }
     const lobbyName = sessionStorage.getItem('lobbyName')
     if ( lobbyName !== 'TEST' ) {
@@ -261,11 +258,17 @@ socket.on('reset-player-role', async ({ role, team }) => {
     const playerRaw = await fetch(`/players/${playerId}`)
     const player = await playerRaw.json()
 
-    if(player.team !== '' ){
-        $(`#${role}-${team}-wrapper`).prop('disabled', true)
+
+    if (player.team !== 'civilian' ) {
+        $(`.team-join-btn`).prop('disabled', true)
     }
 
 })
+
+socket.on('enable-team-join', () => {
+    $('.team-join-btn').prop('disabled', false)
+})
+
 
 socket.on('update-active-state', ({gameState}) => {
     $(".status-box").css("display", "none")
@@ -294,6 +297,7 @@ const cardEvent = async (word) => {
         // Ends turn if out of guesses or bad guess
         if (yourTurn === false) {
             currentGuesses = -1
+            $('.card').css('cursor', 'default')
             socket.emit('cluePhase', { team })
             $('.end-turn-btn').prop('disabled', true)
         } else {
@@ -334,6 +338,7 @@ socket.on('guessingPhase', async ({ guessNumber, team }) => {
 
     // Checks if it's this user's turn
     if (player.role === 'guesser' && player.team === team) {
+        $('.card').css('cursor', 'pointer')
         currentGuesses = guessNumber
         guessEnabled = true
         $('.end-turn-btn').prop('disabled', false)
@@ -348,6 +353,9 @@ socket.on('spymasterPhase', async ({ activeTeam }) => {
     const player = await playerRaw.json()
 
     endTurnSound.play();
+
+    $(`#current-clue`).text('-')
+    $(`#current-guessNumber`).text('-')
 
     if (player.role === 'spymaster' && player.team === activeTeam) {
         $clueFormButton.removeAttribute('disabled')
@@ -365,7 +373,6 @@ socket.on('card-reveal', ({ cardTeam, word }) => {
 
 
 
-
 // Updates cards remaining in teambox on card reveal
 socket.on('update-score', ({ cardTeam }) => {
     const $counter = document.querySelector(`#${cardTeam}-team-counter`)
@@ -379,7 +386,6 @@ socket.on('assassin-game-over', ({ opposingTeam }) => {
 socket.on('card-victory', ({team}) => {
     teamVictory(team)
 })
-
 
 
 const teamVictory = (team) => {
@@ -446,9 +452,25 @@ socket.on('updateGameStatusPlayer', ({playerName, team, role}) => {
         $(`#current-playerName`).css('background-color', `var(--${team}-team-color`)
 })
 
-socket.on('revealGameStatus', () => {
+socket.on('revealGameStatus', async () => {
+    $(".status-box").css("display", "none")
     $("#game-status-box").css("display", "grid")
-    $("#start-menu").css("display", "none")
+
+    const startTeam = sessionStorage.getItem('startTeam')
+    const playerId = sessionStorage.getItem('playerId')
+
+    const response = await fetch(`/players/${playerId}`, { method: 'GET' })
+    const player = await response.json()
+
+    // Changes display to give card overlay and give clue form if they become a spymaster
+    if (player.role === 'spymaster') {
+        const boardId = sessionStorage.getItem('boardId')
+        addBoardOverlay(boardId, player.role)
+        $clueForm.style.display = 'block'
+        if (player.team === startTeam) {
+            socket.emit('updateActivePlayer', { playerName: player.username, team: player.team, role: player.role, gameId: player.gameId })
+        }
+    }
 })
 
 $('#start-btn').on('click', () => {
@@ -470,6 +492,7 @@ $('.end-turn-btn').on('click', async() => {
     const playerRaw = await fetch(`/players/${playerId}`)
     const player = await playerRaw.json()
 
+    $('.card').css('cursor', 'default')
     currentGuesses = -1
     guessEnabled = false
     activeTeam = player.team === 'red' ? 'blue' : 'red'
@@ -490,7 +513,7 @@ socket.on('new-round', async ({gameId}) => {
     $clueForm.style.display = 'none'
     $('.counter').text('8')
 
-    $('.team-join-btn').on('click', function (e) {joinTeamEvent(e)})
+    //$('.team-join-btn').on('click', function (e) {joinTeamEvent(e)})
 
     $('#start-btn').prop('disabled', true)
 

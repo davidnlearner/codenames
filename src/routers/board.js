@@ -1,14 +1,21 @@
 const express = require('express')
 const Board = require('../models/board')
+const Game = require('../models/game')
 const router = new express.Router()
 const { newWords, newOverlay, getStartTeam } = require('../utils/gameSetup')
 
 
 router.post('/boards', async (req, res) => {
     const startTeam = getStartTeam()
+    const game = await Game.findOne({_id: req.body.gameId})
+    console.log(req.body.oldWords)
+    const roundWords = req.body.oldWords.length > 0 ? req.body.oldWords.split(",") : []
+
+    game.oldWords = game.oldWords.length > 300 ? [...roundWords] : [...game.oldWords, ...roundWords]
+    await game.save()
     const board = new Board({
         gameId: req.body.gameId,
-        wordlist: newWords( req.body.oldWords ),
+        wordlist: newWords( game.oldWords ),
         startTeam,
         overlay: newOverlay(startTeam),
     })

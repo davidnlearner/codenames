@@ -160,9 +160,28 @@ io.on('connection', (socket) => {
 
     socket.on('send-restart', async ({gameId}) => {
         io.to(gameId).emit('new-round', {gameId})
-        const game = await Game.findOne({ _id: player.gameId })
+        const game = await Game.findOne({ _id: gameId })
         game.activeState = 'pregame'
         game.save()
+    })
+
+
+    socket.on('reset-role', async ({ playerId }) => {
+        const player = await Player.findOne({ _id: playerId })
+        const game = await Game.findOne({ _id: player.gameId })
+
+        if (game.activeState === 'pregame') {
+            io.to(player.gameId).emit('reset-player-role', { role: player.role, team: player.team })
+
+            game.playerRoles = game.playerRoles.filter((eachPlayer) => { return eachPlayer.username !== player.username })
+            game.save()
+
+            player.role = 'guesser'
+            player.team = 'civilian'
+            player.save()
+
+            socket.emit('enable-team-join')
+        }
     })
 
 
@@ -208,15 +227,16 @@ io.on('connection', (socket) => {
 
 
 const assessVictory = ({startTeam, revealedCards}) => {
-    ['red', 'blue'].forEach((team) => {
+    let winningTeam = null;
+    const teams = ['red', 'blue'];
+    teams.forEach((team) => {
         const score = revealedCards.filter((card) => card.cardTeam === team).length
-        if (team === startTeam && score === 9){
-            return team
-        } else if ( team !== startTeam && score === 8){
-            return team
+        const requiredScore = team === startTeam ? 9 : 8
+        if (score === requiredScore) {
+            winningTeam = team;
         }
     })
-    return undefined
+    return winningTeam
 }
 
 

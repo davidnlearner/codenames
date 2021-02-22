@@ -1,15 +1,18 @@
 const express = require('express')
+const moment = require('moment')
 const router = new express.Router()
 const Game = require('../models/game')
 const Board = require('../models/board')
 const Player = require('../models/player')
 
 
+
 router.post('/games', async (req, res) => {
     const lobbyName = req.body.lobbyName
-
+    const now = moment().format()
     const game = new Game({
-        lobbyName
+        lobbyName,
+        createdAt: now
     })
 
     try {
@@ -34,7 +37,8 @@ router.get('/games/:id', async (req, res) => {
     const game = await Game.findOne({_id: req.params.id})
     try {
         res.send(game)
-    } catch (e) {
+    } 
+    catch (e) {
         res.status(500).send(e)
     }
 })
@@ -44,9 +48,21 @@ router.get('/games/lobby/:lobbyName', async (req, res) => {
     try {
         if(!game) {
             return res.send({msg: 'no game found'})
+        } 
+        else {
+            const createdAt = moment(game.createdAt)
+            const now = moment();
+            const timeAlive = moment.duration(now.diff(createdAt)).asHours();
+            if (timeAlive > 12) {
+                await game.remove()
+                await Board.deleteMany({gameId: game._id})
+                return res.send({msg: 'no game found'})
+            }
+
+            res.send(game)
         }
-        res.send(game)
-    } catch (e) {
+    } 
+    catch (e) {
         res.status(500).send(e)
     }
 })

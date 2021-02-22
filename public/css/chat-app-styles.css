@@ -38,6 +38,7 @@ button {
     transition: background .3s ease;
     max-width: 100%;
     width: 100%;
+    border-radius: 5px;
 }
 
 button:hover {

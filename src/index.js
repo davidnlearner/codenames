@@ -20,8 +20,9 @@ io.on('connection', (socket) => {
 
     socket.on('join', async ({ playerName, gameId }, callback) => {
 
-        const dupPlayer = await Player.findOne({ username: playerName, gameId })
         const game = await Game.findOne({ _id: gameId })
+
+        const dupPlayer = await Player.findOne({ username: playerName, gameId })
 
         if (dupPlayer) {
             return callback({ error: 'Username is already taken. Try again.' })

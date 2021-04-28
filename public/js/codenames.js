@@ -118,12 +118,16 @@ const getGameData = async (lobbyName) => {
     const gameRaw = await fetch(`/games/lobby/${lobbyName}`)
     const game = await gameRaw.json()
 
+    const now = moment().format()
+
     // If there is game 'lobbyName' in database returns a new game, 
     // else gets current game board and returns the game with the board
-    if (game.msg === 'no game found') {
+    if (game.msg === 'no game found') {     // If there is no game with that name in the database
         return newGame(lobbyName)
-    } 
-    else {
+    } else if (now.isAfter(game.createdAt.add(2, 'days')) ) {  // If is a game, but it's more than 2 days old
+        await fetch(`/games`, { method: 'DELETE', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ gameId }) })
+        return newGame(lobbyName)
+    } else {
         const boardRaw = await fetch(`/boards/game/${game._id}`)
         const board = await boardRaw.json()
 

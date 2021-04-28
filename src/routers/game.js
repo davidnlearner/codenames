@@ -106,6 +106,7 @@ router.delete('/games/:id', async (req, res) => {
             res.status(404).send()
         }
         await Board.deleteMany({gameId: game._id})
+        await Player.deleteMany({gameId: game._id})
         res.send(game)
     } catch (e) {
        res.status(500).send()

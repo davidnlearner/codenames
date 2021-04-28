@@ -7,20 +7,19 @@ const { newWords, newOverlay, getStartTeam } = require('../utils/gameSetup')
 
 router.post('/boards', async (req, res) => {
     const startTeam = getStartTeam()
-    const game = await Game.findOne({_id: req.body.gameId})
-    console.log(req.body.oldWords)
+    const game = await Game.findOne({ _id: req.body.gameId })
     const roundWords = req.body.oldWords.length > 0 ? req.body.oldWords.split(",") : []
 
     game.oldWords = game.oldWords.length > 300 ? [...roundWords] : [...game.oldWords, ...roundWords]
     await game.save()
     const board = new Board({
         gameId: req.body.gameId,
-        wordlist: newWords( game.oldWords ),
+        wordlist: newWords(game.oldWords),
         startTeam,
         overlay: newOverlay(startTeam),
     })
 
-    try{
+    try {
         await board.save()
         res.status(201).send(board)
     } catch (e) {
@@ -29,7 +28,7 @@ router.post('/boards', async (req, res) => {
 })
 
 router.get('/boards/game/:gameId', async (req, res) => {
-    const board = await Board.findOne({gameId: req.params.gameId})
+    const board = await Board.findOne({ gameId: req.params.gameId })
     try {
         res.send(board)
     } catch (e) {
@@ -41,7 +40,7 @@ router.get('/boards/game/:gameId', async (req, res) => {
 router.get('/boards/wordlist/:id', async (req, res) => {
     const board = await Board.findOne({ _id: req.params.id })
     try {
-        res.send({wordlist: board.wordlist, startTeam: board.startTeam, revealedCards: board.revealedCards})
+        res.send({ wordlist: board.wordlist, startTeam: board.startTeam, revealedCards: board.revealedCards })
     } catch (e) {
         res.status(500).send(e)
     }

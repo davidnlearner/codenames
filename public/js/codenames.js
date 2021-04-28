@@ -50,7 +50,7 @@ const generateBoard = async (boardId) => {
         $boardContainer.appendChild(node)
     });
 
-    data.revealedCards.forEach( (cardData) => {
+    data.revealedCards.forEach((cardData) => {
         const card = document.querySelector(`#${cardData.word.replace(' ', '_')}-card-id`)
         card.classList.add(`${cardData.cardTeam}-card`)
         card.setAttribute(`revealed`, 'true')
@@ -101,8 +101,8 @@ const newBoard = async (gameId) => {
 // Creates and returns a new game and board
 // Can be made into an import
 const newGame = async (lobbyName) => {
-    // Creates new game 'lobbyName'
-    const gameRaw = await fetch(`/games`, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lobbyName }) })
+    // Creates new game 'lobbyName', passes in current datetime
+    const gameRaw = await fetch(`/games`, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lobbyName, currentDateTime: Date.now() }) })
     const game = await gameRaw.json()
 
     const board = await newBoard(game._id)
@@ -118,16 +118,12 @@ const getGameData = async (lobbyName) => {
     const gameRaw = await fetch(`/games/lobby/${lobbyName}`)
     const game = await gameRaw.json()
 
-    const now = moment().format()
-
     // If there is game 'lobbyName' in database returns a new game, 
     // else gets current game board and returns the game with the board
     if (game.msg === 'no game found') {     // If there is no game with that name in the database
         return newGame(lobbyName)
-    } else if (now.isAfter(game.createdAt.add(2, 'days')) ) {  // If is a game, but it's more than 2 days old
-        await fetch(`/games`, { method: 'DELETE', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ gameId }) })
-        return newGame(lobbyName)
-    } else {
+    }
+    else {
         const boardRaw = await fetch(`/boards/game/${game._id}`)
         const board = await boardRaw.json()
 
@@ -136,9 +132,11 @@ const getGameData = async (lobbyName) => {
 }
 
 
+
 // Starting function
 const joinGame = async (username, lobbyName) => {
-    // Gets game with name 'lobbyName' and its current board or if none found creates a new game with that name
+    // Gets game with name 'lobbyName' and its current board, or if none found creates a new game with that name, 
+    //or if game found >2 days old it deletes and creates a new one
     const { game, board } = await getGameData(lobbyName)
     const gameId = game._id
     // Stores gameId in session storage
@@ -187,11 +185,11 @@ const displaysSetup = async (boardId) => {
 // Chat App functions
 const addNewMessage = (html) => {
     $messages.insertAdjacentHTML('beforeend', html)
-    $('#messages').animate({scrollTop: $('.message').last().offset().top}, 200)
+    $('#messages').animate({ scrollTop: $('.message').last().offset().top }, 200)
 }
 
-socket.on('message', ({ playerName, text, team, type = ''}) => {
-    const html = Mustache.render(messageTemplate, { playerName, text, team, type})
+socket.on('message', ({ playerName, text, team, type = '' }) => {
+    const html = Mustache.render(messageTemplate, { playerName, text, team, type })
     addNewMessage(html)
 })
 
@@ -214,22 +212,23 @@ socket.on('guessMessage', ({ playerName, playerTeam, cardWord, cardTeam }) => {
 
 // Handles join team buttons, Gives user a role and a team, Adjusts display accordingly
 const joinTeamEvent = async (e) => {
-        const role = e.target.getAttribute('role')
-        const team = e.target.getAttribute('team')
+    const role = e.target.getAttribute('role')
+    const team = e.target.getAttribute('team')
 
-        $('.team-join-btn').prop('disabled', true)
+    $('.team-join-btn').prop('disabled', true)
 
-        // changes player info in database
-        const changes = { 'role': role, 'team': team }
-        const playerId = sessionStorage.getItem('playerId')
-        const response = await fetch(`/players/${playerId}`, { method: 'PATCH', headers: { "Content-Type": "application/json" }, body: JSON.stringify(changes) })
+    // changes player info in database
+    const changes = { 'role': role, 'team': team }
+    const playerId = sessionStorage.getItem('playerId')
+    const response = await fetch(`/players/${playerId}`, { method: 'PATCH', headers: { "Content-Type": "application/json" }, body: JSON.stringify(changes) })
 
-        socket.emit('new-role', { role, team, playerId })
+    socket.emit('new-role', { role, team, playerId })
 }
 
 
 $('.team-join-btn').on('click', function (e) {
-    joinTeamEvent(e)})
+    joinTeamEvent(e)
+})
 
 // Recieves claimed roles and adjusts user's display to show username in place of button
 socket.on('new-player-role', ({ role, team, username, gameFull }) => {
@@ -238,7 +237,7 @@ socket.on('new-player-role', ({ role, team, username, gameFull }) => {
     wrapper.innerHTML = `<p class='role-username card-word'> ${username} </p>`
     $(`#${role}-${team}-wrapper`)
         .off('click')
-        .on('click', () => socket.emit('reset-role', {playerId}))
+        .on('click', () => socket.emit('reset-role', { playerId }))
 
     if (gameFull) {
         $('#start-btn').prop('disabled', false)
@@ -251,10 +250,10 @@ socket.on('reset-player-role', async ({ role, team }) => {
         $(`#${role}-${team}-wrapper`)
             .off('click')
             .on('click', function (e) { joinTeamEvent(e) })
-            
+
     }
     const lobbyName = sessionStorage.getItem('lobbyName')
-    if ( lobbyName !== 'TEST' ) {
+    if (lobbyName !== 'TEST') {
         $('#start-btn').prop('disabled', true)
     }
 
@@ -263,7 +262,7 @@ socket.on('reset-player-role', async ({ role, team }) => {
     const player = await playerRaw.json()
 
 
-    if (player.team !== 'civilian' ) {
+    if (player.team !== 'civilian') {
         $(`.team-join-btn`).prop('disabled', true)
     }
 
@@ -274,14 +273,14 @@ socket.on('enable-team-join', () => {
 })
 
 
-socket.on('update-active-state', ({gameState}) => {
+socket.on('update-active-state', ({ gameState }) => {
     $(".status-box").css("display", "none")
 
-    if ( gameState === 'pregame' ) {
+    if (gameState === 'pregame') {
         $('#start-menu').css("display", "grid")
-    } else if ( gameState === 'ongoing' ) {
+    } else if (gameState === 'ongoing') {
         $('#game-status-box').css("display", "grid")
-    } else if ( gameState === 'victory-screen' ) {
+    } else if (gameState === 'victory-screen') {
         $('#victory-menu').css("display", "grid")
     }
 })
@@ -297,7 +296,7 @@ const cardEvent = async (word) => {
     const player = await playerRaw.json()
 
     // Reveals card team to all players and checks if card belongs to user's team 
-    socket.emit('handleGuess', { word, guessNumber: currentGuesses, boardId, player }, ({yourTurn, team}) => {
+    socket.emit('handleGuess', { word, guessNumber: currentGuesses, boardId, player }, ({ yourTurn, team }) => {
         // Ends turn if out of guesses or bad guess
         if (yourTurn === false) {
             currentGuesses = -1
@@ -387,7 +386,7 @@ socket.on('assassin-game-over', ({ opposingTeam }) => {
     teamVictory(opposingTeam)
 })
 
-socket.on('card-victory', ({team}) => {
+socket.on('card-victory', ({ team }) => {
     teamVictory(team)
 })
 
@@ -400,7 +399,7 @@ const teamVictory = (team) => {
 
     const boardId = sessionStorage.getItem('boardId')
     addBoardOverlay(boardId)
-   
+
     repositionVictoryMessage()
 
     const msg = `The ${team} team wins!`
@@ -419,8 +418,8 @@ const repositionVictoryMessage = () => {
     const gameBoardHeight = $('#board-container').height()
 
     $('#victory-display')
-        .css('left', gameBoardWidth/2 + gameLogWidth)
-        .css('top', gameBoardHeight/2)
+        .css('left', gameBoardWidth / 2 + gameLogWidth)
+        .css('top', gameBoardHeight / 2)
 }
 
 $(window).resize(() => {
@@ -437,23 +436,23 @@ $('.leave-game-btn').on('click', () => {
 
 
 // Changes text in game status box
-socket.on('updateGameStatusClue', ({guessNumber, clue=''}) => {
+socket.on('updateGameStatusClue', ({ guessNumber, clue = '' }) => {
     $(`#current-guessNumber`).text(guessNumber)
-    if (clue !== ''){
+    if (clue !== '') {
         $(`#current-clue`).text(clue)
     }
 })
 
-socket.on('updateGameStatusPlayer', ({playerName, team, role}) => {
-        let message = ''
-        if (role === 'spymaster'){
-            message = `It's ${playerName}'s turn to send a clue.`
-        } 
-        else {
-            message = `It's ${playerName}'s turn to guess.`
-        }
-        $(`#current-playerName span`).text(message)
-        $(`#current-playerName`).css('background-color', `var(--${team}-team-color`)
+socket.on('updateGameStatusPlayer', ({ playerName, team, role }) => {
+    let message = ''
+    if (role === 'spymaster') {
+        message = `It's ${playerName}'s turn to send a clue.`
+    }
+    else {
+        message = `It's ${playerName}'s turn to guess.`
+    }
+    $(`#current-playerName span`).text(message)
+    $(`#current-playerName`).css('background-color', `var(--${team}-team-color`)
 })
 
 socket.on('revealGameStatus', async () => {
@@ -480,18 +479,18 @@ socket.on('revealGameStatus', async () => {
 $('#start-btn').on('click', () => {
     const gameId = sessionStorage.getItem('gameId')
     const startTeam = sessionStorage.getItem('startTeam')
-    socket.emit('startGame', {gameId, startTeam})
+    socket.emit('startGame', { gameId, startTeam })
 })
 
 $('#new-game-btn').on('click', () => {
     const gameId = sessionStorage.getItem('gameId')
     // Clears player roles and deletes old board
-    socket.emit('clear-board', {gameId})
+    socket.emit('clear-board', { gameId })
     newBoard(gameId)
-    socket.emit('send-restart', {gameId})
+    socket.emit('send-restart', { gameId })
 })
 
-$('.end-turn-btn').on('click', async() => {
+$('.end-turn-btn').on('click', async () => {
     const playerId = sessionStorage.getItem('playerId')
     const playerRaw = await fetch(`/players/${playerId}`)
     const player = await playerRaw.json()
@@ -501,13 +500,13 @@ $('.end-turn-btn').on('click', async() => {
     guessEnabled = false
     activeTeam = player.team === 'red' ? 'blue' : 'red'
 
-    socket.emit('sendMessage',{ playerName: player.username, text: ` ended their turn.`, team: player.team, gameId: player.gameId})
+    socket.emit('sendMessage', { playerName: player.username, text: ` ended their turn.`, team: player.team, gameId: player.gameId })
     socket.emit('updateClue', { gameId: player.gameId })
     socket.emit('end-turn', { activeTeam, gameId: player.gameId })
     $('.end-turn-btn').prop('disabled', true)
 })
 
-socket.on('new-round', async ({gameId}) => {
+socket.on('new-round', async ({ gameId }) => {
     $('#victory-display').css('display', 'none')
     //Removing player roles and teams
     const changes = { 'role': 'guesser', 'team': 'civilian' }

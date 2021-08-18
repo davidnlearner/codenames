@@ -15,6 +15,7 @@
 
 body{
     background-color: rgb(182, 214, 228);
+    margin: 0 !important;
 }
 
 .card {

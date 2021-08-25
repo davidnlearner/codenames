@@ -6,4 +6,4 @@ This project uses:
 - Express.js as a server (as well as sockets)
 - Vanilla Javascript/HTML/CSS on the front-end
 
-The live project (work in progress) lives here: http://dlearner-codenames.herokuapp.com/
+The live project lives here: http://codenames.david-learner.com/
